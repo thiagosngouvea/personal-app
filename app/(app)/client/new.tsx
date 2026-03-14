@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,7 +10,7 @@ import {
   Alert,
   Image,
 } from 'react-native';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
@@ -19,19 +19,43 @@ import { useAuthStore } from '@/store/authStore';
 import { useAppStore } from '@/store/appStore';
 import { clientService } from '@/services/clientService';
 import { useTranslation } from '@/i18n';
-import { Button, Input } from '@/components/ui';
+import { Button, Input, Loading } from '@/components/ui';
 import { CreateClientForm } from '@/types';
 import { FontSize, Spacing, BorderRadius } from '@/constants/theme';
 
 export default function NewClientScreen() {
+  const {
+    clientId,
+    clientName,
+    clientAge,
+    clientHeight,
+    clientGender,
+    clientWhatsapp,
+    clientEmail,
+    clientPhotoUrl,
+  } = useLocalSearchParams<{
+    clientId?: string;
+    clientName?: string;
+    clientAge?: string;
+    clientHeight?: string;
+    clientGender?: string;
+    clientWhatsapp?: string;
+    clientEmail?: string;
+    clientPhotoUrl?: string;
+  }>();
+
+  const isEditing = !!clientId;
+
   const colors = useTheme();
   const insets = useSafeAreaInsets();
   const user = useAuthStore((s) => s.user);
   const addClient = useAppStore((s) => s.addClient);
+  const updateClientStore = useAppStore((s) => s.updateClient);
   const t = useTranslation();
 
   const [loading, setLoading] = useState(false);
   const [photoUri, setPhotoUri] = useState<string | undefined>();
+  const [existingPhotoUrl, setExistingPhotoUrl] = useState<string | undefined>();
   const [form, setForm] = useState<CreateClientForm>({
     name: '',
     age: '',
@@ -40,6 +64,23 @@ export default function NewClientScreen() {
     whatsapp: '',
     email: '',
   });
+
+  // Pre-fill form in edit mode
+  useEffect(() => {
+    if (isEditing) {
+      setForm({
+        name: clientName || '',
+        age: clientAge || '',
+        height: clientHeight || '',
+        gender: (clientGender as 'male' | 'female' | 'other') || 'male',
+        whatsapp: clientWhatsapp || '',
+        email: clientEmail || '',
+      });
+      if (clientPhotoUrl) {
+        setExistingPhotoUrl(clientPhotoUrl);
+      }
+    }
+  }, [isEditing]);
 
   const isValid =
     form.name.trim().length > 0 &&
@@ -59,6 +100,7 @@ export default function NewClientScreen() {
     });
     if (!result.canceled) {
       setPhotoUri(result.assets[0].uri);
+      setExistingPhotoUrl(undefined); // new photo replaces existing
     }
   };
 
@@ -75,6 +117,7 @@ export default function NewClientScreen() {
     });
     if (!result.canceled) {
       setPhotoUri(result.assets[0].uri);
+      setExistingPhotoUrl(undefined);
     }
   };
 
@@ -90,27 +133,50 @@ export default function NewClientScreen() {
     );
   };
 
-  const handleCreate = async () => {
+  const displayPhotoUri = photoUri || existingPhotoUrl;
+
+  const handleSave = async () => {
     if (!isValid || !user?.uid) return;
 
     setLoading(true);
     try {
-      const { id, photoUrl } = await clientService.create(user.uid, form, photoUri);
-      addClient({
-        id,
-        trainerId: user.uid,
-        name: form.name.trim(),
-        age: parseInt(form.age, 10),
-        height: parseFloat(form.height),
-        gender: form.gender,
-        whatsapp: form.whatsapp.trim() || undefined,
-        email: form.email.trim() || undefined,
-        photoUrl,
-        createdAt: new Date(),
-      });
+      if (isEditing && clientId) {
+        // Update
+        const newPhotoUrl = await clientService.update(clientId, form, photoUri);
+        updateClientStore({
+          id: clientId,
+          trainerId: user.uid,
+          name: form.name.trim(),
+          age: parseInt(form.age, 10),
+          height: parseFloat(form.height),
+          gender: form.gender,
+          whatsapp: form.whatsapp.trim() || undefined,
+          email: form.email.trim() || undefined,
+          photoUrl: newPhotoUrl || existingPhotoUrl,
+          createdAt: new Date(), // keeps original from store
+        });
+      } else {
+        // Create
+        const { id, photoUrl } = await clientService.create(user.uid, form, photoUri);
+        addClient({
+          id,
+          trainerId: user.uid,
+          name: form.name.trim(),
+          age: parseInt(form.age, 10),
+          height: parseFloat(form.height),
+          gender: form.gender,
+          whatsapp: form.whatsapp.trim() || undefined,
+          email: form.email.trim() || undefined,
+          photoUrl,
+          createdAt: new Date(),
+        });
+      }
       router.back();
     } catch (err) {
-      Alert.alert(t.common.error, t.client.errorCreateClient);
+      Alert.alert(
+        t.common.error,
+        isEditing ? t.client.errorUpdateClient : t.client.errorCreateClient
+      );
       console.error(err);
     } finally {
       setLoading(false);
@@ -175,7 +241,7 @@ export default function NewClientScreen() {
             <Ionicons name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
           <Text style={[styles.title, { color: colors.text }]}>
-            {t.client.newClient}
+            {isEditing ? t.client.editClient : t.client.newClient}
           </Text>
           <View style={{ width: 24 }} />
         </View>
@@ -183,8 +249,8 @@ export default function NewClientScreen() {
         {/* Client Photo */}
         <View style={styles.photoSection}>
           <TouchableOpacity onPress={showPhotoOptions} activeOpacity={0.7}>
-            {photoUri ? (
-              <Image source={{ uri: photoUri }} style={styles.photoPreview} />
+            {displayPhotoUri ? (
+              <Image source={{ uri: displayPhotoUri }} style={styles.photoPreview} />
             ) : (
               <View
                 style={[
@@ -198,7 +264,7 @@ export default function NewClientScreen() {
           </TouchableOpacity>
           <TouchableOpacity onPress={showPhotoOptions} activeOpacity={0.7}>
             <Text style={[styles.photoActionText, { color: colors.primary }]}>
-              {photoUri ? t.client.changePhoto : t.client.addPhoto}
+              {displayPhotoUri ? t.client.changePhoto : t.client.addPhoto}
             </Text>
           </TouchableOpacity>
           <Text style={[styles.optionalText, { color: colors.textTertiary }]}>
@@ -268,8 +334,8 @@ export default function NewClientScreen() {
         />
 
         <Button
-          title={t.client.createClient}
-          onPress={handleCreate}
+          title={isEditing ? t.client.updateClient : t.client.createClient}
+          onPress={handleSave}
           loading={loading}
           disabled={!isValid}
           size="lg"

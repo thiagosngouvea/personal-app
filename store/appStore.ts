@@ -22,6 +22,7 @@ interface AppState {
   loadClients: (trainerId: string) => Promise<void>;
   loadDashboard: (trainerId: string) => Promise<void>;
   addClient: (client: Client) => void;
+  updateClient: (client: Client) => void;
   reset: () => void;
 }
 
@@ -74,6 +75,12 @@ export const useAppStore = create<AppState>((set) => ({
     set((state) => ({
       clients: [client, ...state.clients],
       clientCount: state.clientCount + 1,
+    }));
+  },
+
+  updateClient: (client) => {
+    set((state) => ({
+      clients: state.clients.map((c) => (c.id === client.id ? client : c)),
     }));
   },
 

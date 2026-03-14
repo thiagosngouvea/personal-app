@@ -150,7 +150,26 @@ export default function ClientDetailScreen() {
           <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
             {client.name}
           </Text>
-          <View style={{ width: 24 }} />
+          <TouchableOpacity
+            onPress={() =>
+              router.push({
+                pathname: '/(app)/client/new',
+                params: {
+                  clientId: client.id,
+                  clientName: client.name,
+                  clientAge: String(client.age),
+                  clientHeight: String(client.height),
+                  clientGender: client.gender,
+                  clientWhatsapp: client.whatsapp || '',
+                  clientEmail: client.email || '',
+                  clientPhotoUrl: client.photoUrl || '',
+                },
+              })
+            }
+            activeOpacity={0.7}
+          >
+            <Ionicons name="create-outline" size={24} color={colors.primary} />
+          </TouchableOpacity>
         </View>
 
         {/* Client Profile */}
