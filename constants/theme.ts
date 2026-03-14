@@ -1,53 +1,94 @@
-/**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
- */
-
-import { Platform } from 'react-native';
-
-const tintColorLight = '#0a7ea4';
-const tintColorDark = '#fff';
+// ==========================================
+// Theme & Design System
+// ==========================================
 
 export const Colors = {
   light: {
-    text: '#11181C',
-    background: '#fff',
-    tint: tintColorLight,
-    icon: '#687076',
-    tabIconDefault: '#687076',
-    tabIconSelected: tintColorLight,
+    primary: '#0EA5E9',       // Sky blue
+    primaryDark: '#0284C7',
+    primaryLight: '#38BDF8',
+    accent: '#10B981',        // Emerald green
+    accentDark: '#059669',
+    background: '#F8FAFC',
+    surface: '#FFFFFF',
+    surfaceElevated: '#F1F5F9',
+    text: '#0F172A',
+    textSecondary: '#64748B',
+    textTertiary: '#94A3B8',
+    border: '#E2E8F0',
+    borderLight: '#F1F5F9',
+    error: '#EF4444',
+    errorLight: '#FEF2F2',
+    success: '#10B981',
+    successLight: '#ECFDF5',
+    warning: '#F59E0B',
+    warningLight: '#FFFBEB',
+    card: '#FFFFFF',
+    cardShadow: 'rgba(0, 0, 0, 0.06)',
+    overlay: 'rgba(0, 0, 0, 0.5)',
+    tabBar: '#FFFFFF',
+    tabBarBorder: '#E2E8F0',
+    inputBackground: '#F8FAFC',
+    skeleton: '#E2E8F0',
   },
   dark: {
-    text: '#ECEDEE',
-    background: '#151718',
-    tint: tintColorDark,
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
-    tabIconSelected: tintColorDark,
+    primary: '#38BDF8',
+    primaryDark: '#0EA5E9',
+    primaryLight: '#7DD3FC',
+    accent: '#34D399',
+    accentDark: '#10B981',
+    background: '#0F172A',
+    surface: '#1E293B',
+    surfaceElevated: '#334155',
+    text: '#F8FAFC',
+    textSecondary: '#94A3B8',
+    textTertiary: '#64748B',
+    border: '#334155',
+    borderLight: '#1E293B',
+    error: '#F87171',
+    errorLight: '#451A1A',
+    success: '#34D399',
+    successLight: '#1A3A2A',
+    warning: '#FBBF24',
+    warningLight: '#3A3520',
+    card: '#1E293B',
+    cardShadow: 'rgba(0, 0, 0, 0.3)',
+    overlay: 'rgba(0, 0, 0, 0.7)',
+    tabBar: '#1E293B',
+    tabBarBorder: '#334155',
+    inputBackground: '#1E293B',
+    skeleton: '#334155',
   },
 };
 
-export const Fonts = Platform.select({
-  ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
-    sans: 'system-ui',
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
-    serif: 'ui-serif',
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
-    rounded: 'ui-rounded',
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
-    mono: 'ui-monospace',
-  },
-  default: {
-    sans: 'normal',
-    serif: 'serif',
-    rounded: 'normal',
-    mono: 'monospace',
-  },
-  web: {
-    sans: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-    serif: "Georgia, 'Times New Roman', serif",
-    rounded: "'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Meiryo, 'MS PGothic', sans-serif",
-    mono: "SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
-  },
-});
+export const Spacing = {
+  xs: 4,
+  sm: 8,
+  md: 12,
+  lg: 16,
+  xl: 20,
+  xxl: 24,
+  xxxl: 32,
+  huge: 48,
+};
+
+export const FontSize = {
+  xs: 11,
+  sm: 13,
+  md: 15,
+  lg: 17,
+  xl: 20,
+  xxl: 24,
+  xxxl: 30,
+  hero: 36,
+};
+
+export const BorderRadius = {
+  sm: 8,
+  md: 12,
+  lg: 16,
+  xl: 20,
+  full: 999,
+};
+
+export type ThemeColors = typeof Colors.light;
