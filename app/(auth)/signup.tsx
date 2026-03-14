@@ -12,12 +12,14 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 import { useAuthStore } from '@/store/authStore';
+import { useTranslation } from '@/i18n';
 import { Button, Input } from '@/components/ui';
 import { FontSize, Spacing, BorderRadius } from '@/constants/theme';
 
 export default function SignupScreen() {
   const colors = useTheme();
   const { signUp, isLoading, error, clearError } = useAuthStore();
+  const t = useTranslation();
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -62,10 +64,10 @@ export default function SignupScreen() {
             <Ionicons name="person-add" size={36} color={colors.accent} />
           </View>
           <Text style={[styles.title, { color: colors.text }]}>
-            Create Account
+            {t.auth.createAccount}
           </Text>
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-            Start managing your clients today
+            {t.auth.signUpSubtitle}
           </Text>
         </View>
 
@@ -81,16 +83,16 @@ export default function SignupScreen() {
           )}
 
           <Input
-            label="Full Name"
-            placeholder="John Doe"
+            label={t.auth.fullName}
+            placeholder={t.auth.fullNamePlaceholder}
             value={name}
             onChangeText={setName}
             autoCapitalize="words"
           />
 
           <Input
-            label="Email"
-            placeholder="trainer@example.com"
+            label={t.auth.email}
+            placeholder={t.auth.emailPlaceholder}
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
@@ -99,8 +101,8 @@ export default function SignupScreen() {
           />
 
           <Input
-            label="Password"
-            placeholder="Min 6 characters"
+            label={t.auth.password}
+            placeholder={t.auth.minCharacters}
             value={password}
             onChangeText={setPassword}
             secureTextEntry
@@ -108,21 +110,21 @@ export default function SignupScreen() {
           />
 
           <Input
-            label="Confirm Password"
-            placeholder="Re-enter password"
+            label={t.auth.confirmPassword}
+            placeholder={t.auth.confirmPasswordPlaceholder}
             value={confirmPassword}
             onChangeText={setConfirmPassword}
             secureTextEntry
             autoCapitalize="none"
             error={
               confirmPassword.length > 0 && password !== confirmPassword
-                ? 'Passwords do not match'
+                ? t.auth.passwordsDoNotMatch
                 : undefined
             }
           />
 
           <Button
-            title="Create Account"
+            title={t.auth.createAccount}
             onPress={handleSignup}
             loading={isLoading}
             disabled={!isValid}
@@ -134,11 +136,11 @@ export default function SignupScreen() {
         {/* Footer */}
         <View style={styles.footer}>
           <Text style={[styles.footerText, { color: colors.textSecondary }]}>
-            Already have an account?{' '}
+            {t.auth.hasAccount}
           </Text>
           <TouchableOpacity onPress={() => router.back()}>
             <Text style={[styles.linkText, { color: colors.primary }]}>
-              Sign In
+              {t.auth.signIn}
             </Text>
           </TouchableOpacity>
         </View>

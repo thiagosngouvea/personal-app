@@ -1,12 +1,14 @@
 import { Redirect, Stack } from 'expo-router';
 import { useAuthStore } from '@/store/authStore';
+import { useTranslation } from '@/i18n';
 import { Loading } from '@/components/ui';
 
 export default function AppLayout() {
   const { user, isInitialized } = useAuthStore();
+  const t = useTranslation();
 
   if (!isInitialized) {
-    return <Loading message="Loading..." />;
+    return <Loading message={t.common.loading} />;
   }
 
   if (!user) {

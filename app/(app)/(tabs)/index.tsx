@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback } from 'react';
+import React, { useCallback } from 'react';
 import {
   View,
   Text,
@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/hooks/useTheme';
 import { useAuthStore } from '@/store/authStore';
 import { useAppStore } from '@/store/appStore';
+import { useTranslation } from '@/i18n';
 import { StatCard, ClientCard, EmptyState, Card } from '@/components/ui';
 import { FontSize, Spacing, BorderRadius } from '@/constants/theme';
 
@@ -20,6 +21,7 @@ export default function DashboardScreen() {
   const colors = useTheme();
   const insets = useSafeAreaInsets();
   const user = useAuthStore((s) => s.user);
+  const t = useTranslation();
   const {
     clients,
     clientsLoading,
@@ -49,7 +51,7 @@ export default function DashboardScreen() {
   };
 
   const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString('en-US', {
+    return new Date(date).toLocaleDateString(t.dateLocale, {
       month: 'short',
       day: 'numeric',
     });
@@ -75,10 +77,10 @@ export default function DashboardScreen() {
         <View style={styles.header}>
           <View>
             <Text style={[styles.greeting, { color: colors.textSecondary }]}>
-              Welcome back
+              {t.dashboard.welcomeBack}
             </Text>
             <Text style={[styles.name, { color: colors.text }]}>
-              {user?.displayName || 'Trainer'}
+              {user?.displayName || t.common.trainer}
             </Text>
           </View>
           <TouchableOpacity
@@ -94,14 +96,14 @@ export default function DashboardScreen() {
         <View style={styles.statsRow}>
           <StatCard
             icon="people"
-            label="Clients"
+            label={t.dashboard.clients}
             value={clientCount}
             color={colors.primary}
           />
           <View style={{ width: Spacing.md }} />
           <StatCard
             icon="clipboard"
-            label="Evaluations"
+            label={t.dashboard.evaluations}
             value={recentEvaluations.length}
             color={colors.accent}
           />
@@ -111,51 +113,71 @@ export default function DashboardScreen() {
         {recentEvaluations.length > 0 && (
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>
-              Recent Evaluations
+              {t.dashboard.recentEvaluations}
             </Text>
-            {recentEvaluations.slice(0, 3).map((evaluation) => (
-              <Card key={evaluation.id} style={styles.evalCard}>
-                <View style={styles.evalRow}>
-                  <View
-                    style={[
-                      styles.evalDot,
-                      { backgroundColor: colors.accent },
-                    ]}
-                  />
-                  <View style={styles.evalInfo}>
-                    <Text style={[styles.evalWeight, { color: colors.text }]}>
-                      {evaluation.weight} kg
-                      {evaluation.bmi ? ` • BMI ${evaluation.bmi}` : ''}
-                    </Text>
-                    <Text
-                      style={[
-                        styles.evalDate,
-                        { color: colors.textSecondary },
-                      ]}
-                    >
-                      {formatDate(evaluation.createdAt)}
-                    </Text>
-                  </View>
-                  {evaluation.bodyFatPercentage && (
-                    <View
-                      style={[
-                        styles.evalBadge,
-                        { backgroundColor: colors.primary + '15' },
-                      ]}
-                    >
-                      <Text
+            {recentEvaluations.slice(0, 5).map((evaluation) => {
+              const evalClient = clients.find((c) => c.id === evaluation.clientId);
+              return (
+                <TouchableOpacity
+                  key={evaluation.id}
+                  activeOpacity={0.7}
+                  onPress={() => {
+                    if (evalClient) {
+                      router.push({
+                        pathname: '/(app)/client/[id]',
+                        params: { id: evalClient.id },
+                      });
+                    }
+                  }}
+                >
+                  <Card style={styles.evalCard}>
+                    <View style={styles.evalRow}>
+                      <View
                         style={[
-                          styles.evalBadgeText,
-                          { color: colors.primary },
+                          styles.evalDot,
+                          { backgroundColor: colors.accent },
                         ]}
-                      >
-                        {evaluation.bodyFatPercentage}% BF
-                      </Text>
+                      />
+                      <View style={styles.evalInfo}>
+                        {evalClient && (
+                          <Text
+                            style={[styles.evalClientName, { color: colors.text }]}
+                            numberOfLines={1}
+                          >
+                            {evalClient.name}
+                            <Text style={[styles.evalClientAge, { color: colors.textTertiary }]}>
+                              {' '}{evalClient.age} {t.common.years}
+                            </Text>
+                          </Text>
+                        )}
+                        <Text style={[styles.evalWeight, { color: colors.textSecondary }]}>
+                          {evaluation.weight} kg
+                          {evaluation.protocols?.bmi ? ` • IMC ${evaluation.protocols.bmi}` : ''}
+                          {' • '}{formatDate(evaluation.createdAt)}
+                        </Text>
+                      </View>
+                      {evaluation.protocols?.pollock3 && (
+                        <View
+                          style={[
+                            styles.evalBadge,
+                            { backgroundColor: colors.primary + '15' },
+                          ]}
+                        >
+                          <Text
+                            style={[
+                              styles.evalBadgeText,
+                              { color: colors.primary },
+                            ]}
+                          >
+                            {evaluation.protocols.pollock3}% BF
+                          </Text>
+                        </View>
+                      )}
                     </View>
-                  )}
-                </View>
-              </Card>
-            ))}
+                  </Card>
+                </TouchableOpacity>
+              );
+            })}
           </View>
         )}
 
@@ -163,14 +185,14 @@ export default function DashboardScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>
-              Your Clients
+              {t.dashboard.yourClients}
             </Text>
             <TouchableOpacity
               onPress={() => router.push('/(app)/client/new')}
               activeOpacity={0.7}
             >
               <Text style={[styles.seeAll, { color: colors.primary }]}>
-                + Add New
+                {t.dashboard.addNew}
               </Text>
             </TouchableOpacity>
           </View>
@@ -178,9 +200,9 @@ export default function DashboardScreen() {
           {clients.length === 0 && !clientsLoading ? (
             <EmptyState
               icon="people-outline"
-              title="No clients yet"
-              description="Add your first client to start performing evaluations"
-              actionLabel="Add Client"
+              title={t.dashboard.noClientsYet}
+              description={t.dashboard.noClientsDescription}
+              actionLabel={t.dashboard.addClient}
               onAction={() => router.push('/(app)/client/new')}
             />
           ) : (
@@ -267,12 +289,16 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   evalWeight: {
+    fontSize: FontSize.sm,
+    marginTop: 2,
+  },
+  evalClientName: {
     fontSize: FontSize.md,
     fontWeight: '600',
   },
-  evalDate: {
+  evalClientAge: {
     fontSize: FontSize.sm,
-    marginTop: 2,
+    fontWeight: '400',
   },
   evalBadge: {
     paddingHorizontal: Spacing.md,

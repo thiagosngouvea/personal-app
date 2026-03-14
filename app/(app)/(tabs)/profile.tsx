@@ -5,6 +5,7 @@ import {
   StyleSheet,
   ScrollView,
   Alert,
+  TouchableOpacity,
 } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -12,6 +13,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/hooks/useTheme';
 import { useAuthStore } from '@/store/authStore';
 import { useAppStore } from '@/store/appStore';
+import { useTranslation } from '@/i18n';
+import { Language } from '@/i18n';
 import { Button, Card } from '@/components/ui';
 import { FontSize, Spacing, BorderRadius } from '@/constants/theme';
 
@@ -19,13 +22,14 @@ export default function ProfileScreen() {
   const colors = useTheme();
   const insets = useSafeAreaInsets();
   const { user, logOut } = useAuthStore();
-  const reset = useAppStore((s) => s.reset);
+  const { reset, language, setLanguage } = useAppStore();
+  const t = useTranslation();
 
   const handleLogout = () => {
-    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert(t.profile.signOut, t.profile.signOutConfirm, [
+      { text: t.common.cancel, style: 'cancel' },
       {
-        text: 'Sign Out',
+        text: t.profile.signOut,
         style: 'destructive',
         onPress: async () => {
           reset();
@@ -34,6 +38,11 @@ export default function ProfileScreen() {
         },
       },
     ]);
+  };
+
+  const handleLanguageToggle = () => {
+    const newLang: Language = language === 'pt' ? 'en' : 'pt';
+    setLanguage(newLang);
   };
 
   return (
@@ -45,7 +54,7 @@ export default function ProfileScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={[styles.title, { color: colors.text }]}>Profile</Text>
+        <Text style={[styles.title, { color: colors.text }]}>{t.profile.title}</Text>
 
         {/* User Info */}
         <Card style={styles.userCard}>
@@ -60,7 +69,7 @@ export default function ProfileScreen() {
             </View>
             <View style={styles.userInfo}>
               <Text style={[styles.userName, { color: colors.text }]}>
-                {user?.displayName || 'Trainer'}
+                {user?.displayName || t.common.trainer}
               </Text>
               <Text style={[styles.userEmail, { color: colors.textSecondary }]}>
                 {user?.email}
@@ -72,25 +81,25 @@ export default function ProfileScreen() {
         {/* Settings */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
-            ACCOUNT
+            {t.profile.account}
           </Text>
 
           <Card style={styles.menuCard}>
             <MenuItem
               icon="person-outline"
-              label="Edit Profile"
+              label={t.profile.editProfile}
               colors={colors}
             />
             <View style={[styles.divider, { backgroundColor: colors.border }]} />
             <MenuItem
               icon="notifications-outline"
-              label="Notifications"
+              label={t.profile.notifications}
               colors={colors}
             />
             <View style={[styles.divider, { backgroundColor: colors.border }]} />
             <MenuItem
               icon="shield-outline"
-              label="Privacy"
+              label={t.profile.privacy}
               colors={colors}
             />
           </Card>
@@ -98,26 +107,39 @@ export default function ProfileScreen() {
 
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
-            APP
+            {t.profile.app}
           </Text>
 
           <Card style={styles.menuCard}>
+            <TouchableOpacity onPress={handleLanguageToggle} activeOpacity={0.7}>
+              <View style={menuStyles.item}>
+                <Ionicons name="language-outline" size={22} color={colors.textSecondary} />
+                <Text style={[menuStyles.label, { color: colors.text }]}>
+                  {t.profile.language}
+                </Text>
+                <Text style={[menuStyles.langValue, { color: colors.primary }]}>
+                  {language === 'pt' ? 'PT-BR' : 'EN'}
+                </Text>
+                <Ionicons name="chevron-forward" size={18} color={colors.textTertiary} />
+              </View>
+            </TouchableOpacity>
+            <View style={[styles.divider, { backgroundColor: colors.border }]} />
             <MenuItem
               icon="help-circle-outline"
-              label="Help & Support"
+              label={t.profile.helpSupport}
               colors={colors}
             />
             <View style={[styles.divider, { backgroundColor: colors.border }]} />
             <MenuItem
               icon="information-circle-outline"
-              label="About"
+              label={t.profile.about}
               colors={colors}
             />
           </Card>
         </View>
 
         <Button
-          title="Sign Out"
+          title={t.profile.signOut}
           onPress={handleLogout}
           variant="danger"
           size="lg"
@@ -125,7 +147,7 @@ export default function ProfileScreen() {
         />
 
         <Text style={[styles.version, { color: colors.textTertiary }]}>
-          PersonalApp v1.0.0
+          {t.profile.version}
         </Text>
       </ScrollView>
     </View>
@@ -160,6 +182,10 @@ const menuStyles = StyleSheet.create({
   label: {
     flex: 1,
     fontSize: FontSize.md,
+  },
+  langValue: {
+    fontSize: FontSize.sm,
+    fontWeight: '600',
   },
 });
 

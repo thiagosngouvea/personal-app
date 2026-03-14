@@ -12,12 +12,14 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 import { useAuthStore } from '@/store/authStore';
+import { useTranslation } from '@/i18n';
 import { Button, Input } from '@/components/ui';
 import { FontSize, Spacing, BorderRadius } from '@/constants/theme';
 
 export default function LoginScreen() {
   const colors = useTheme();
   const { signIn, isLoading, error, clearError } = useAuthStore();
+  const t = useTranslation();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -55,10 +57,10 @@ export default function LoginScreen() {
             <Ionicons name="fitness" size={40} color={colors.primary} />
           </View>
           <Text style={[styles.title, { color: colors.text }]}>
-            Welcome Back
+            {t.auth.welcomeBack}
           </Text>
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-            Sign in to manage your clients
+            {t.auth.signInSubtitle}
           </Text>
         </View>
 
@@ -74,8 +76,8 @@ export default function LoginScreen() {
           )}
 
           <Input
-            label="Email"
-            placeholder="trainer@example.com"
+            label={t.auth.email}
+            placeholder={t.auth.emailPlaceholder}
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
@@ -85,8 +87,8 @@ export default function LoginScreen() {
 
           <View>
             <Input
-              label="Password"
-              placeholder="Enter your password"
+              label={t.auth.password}
+              placeholder={t.auth.passwordPlaceholder}
               value={password}
               onChangeText={setPassword}
               secureTextEntry={!showPassword}
@@ -105,7 +107,7 @@ export default function LoginScreen() {
           </View>
 
           <Button
-            title="Sign In"
+            title={t.auth.signIn}
             onPress={handleLogin}
             loading={isLoading}
             disabled={!email.trim() || !password.trim()}
@@ -117,11 +119,11 @@ export default function LoginScreen() {
         {/* Footer */}
         <View style={styles.footer}>
           <Text style={[styles.footerText, { color: colors.textSecondary }]}>
-            Don't have an account?{' '}
+            {t.auth.noAccount}
           </Text>
           <TouchableOpacity onPress={() => router.push('/(auth)/signup')}>
             <Text style={[styles.linkText, { color: colors.primary }]}>
-              Sign Up
+              {t.auth.signUp}
             </Text>
           </TouchableOpacity>
         </View>

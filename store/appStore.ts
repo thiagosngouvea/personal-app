@@ -2,8 +2,12 @@ import { create } from 'zustand';
 import { Client, Evaluation } from '@/types';
 import { clientService } from '@/services/clientService';
 import { evaluationService } from '@/services/evaluationService';
+import { Language } from '@/i18n';
 
 interface AppState {
+  // Language
+  language: Language;
+
   // Clients
   clients: Client[];
   clientsLoading: boolean;
@@ -14,6 +18,7 @@ interface AppState {
   recentLoading: boolean;
 
   // Actions
+  setLanguage: (language: Language) => void;
   loadClients: (trainerId: string) => Promise<void>;
   loadDashboard: (trainerId: string) => Promise<void>;
   addClient: (client: Client) => void;
@@ -21,12 +26,16 @@ interface AppState {
 }
 
 export const useAppStore = create<AppState>((set) => ({
+  language: 'pt',
+
   clients: [],
   clientsLoading: false,
   clientCount: 0,
 
   recentEvaluations: [],
   recentLoading: false,
+
+  setLanguage: (language) => set({ language }),
 
   loadClients: async (trainerId) => {
     set({ clientsLoading: true });

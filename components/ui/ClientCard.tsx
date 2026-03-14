@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
+import { useTranslation } from '@/i18n';
 import { Card } from './Card';
 import { FontSize, Spacing, BorderRadius } from '@/constants/theme';
 import { Client } from '@/types';
@@ -13,6 +14,7 @@ interface ClientCardProps {
 
 export function ClientCard({ client, onPress }: ClientCardProps) {
   const colors = useTheme();
+  const t = useTranslation();
 
   const getInitials = (name: string) => {
     return name
@@ -34,16 +36,24 @@ export function ClientCard({ client, onPress }: ClientCardProps) {
   return (
     <Card onPress={onPress} style={styles.card}>
       <View style={styles.row}>
-        <View
-          style={[
-            styles.avatar,
-            { backgroundColor: colors.primary + '20' },
-          ]}
-        >
-          <Text style={[styles.initials, { color: colors.primary }]}>
-            {getInitials(client.name)}
-          </Text>
-        </View>
+        {client.photoUrl ? (
+          <Image
+            source={{ uri: client.photoUrl }}
+            style={styles.avatar}
+          />
+        ) : (
+          <View
+            style={[
+              styles.avatar,
+              styles.avatarPlaceholder,
+              { backgroundColor: colors.primary + '20' },
+            ]}
+          >
+            <Text style={[styles.initials, { color: colors.primary }]}>
+              {getInitials(client.name)}
+            </Text>
+          </View>
+        )}
         <View style={styles.info}>
           <Text style={[styles.name, { color: colors.text }]} numberOfLines={1}>
             {client.name}
@@ -51,7 +61,7 @@ export function ClientCard({ client, onPress }: ClientCardProps) {
           <View style={styles.metaRow}>
             <Ionicons name={getGenderIcon()} size={14} color={colors.textTertiary} />
             <Text style={[styles.meta, { color: colors.textSecondary }]}>
-              {client.age} years • {client.height}m
+              {client.age} {t.common.years} • {client.height}m
             </Text>
           </View>
         </View>
@@ -73,9 +83,11 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
+    marginRight: Spacing.md,
+  },
+  avatarPlaceholder: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: Spacing.md,
   },
   initials: {
     fontSize: FontSize.lg,

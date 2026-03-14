@@ -4,6 +4,7 @@ import {
   addDoc,
   getDoc,
   getDocs,
+  deleteDoc,
   query,
   where,
   orderBy,
@@ -18,9 +19,14 @@ import {
   ref,
   uploadBytes,
   getDownloadURL,
+  deleteObject,
+  listAll,
 } from 'firebase/storage';
 import { db, storage } from '@/firebase/config';
-import { Evaluation, CreateEvaluationForm, EvaluationPhotos } from '@/types';
+import {
+  Evaluation,
+  CreateEvaluationForm,
+} from '@/types';
 
 const COLLECTION = 'evaluations';
 const PAGE_SIZE = 10;
@@ -32,19 +38,30 @@ function docToEvaluation(docSnap: DocumentSnapshot): Evaluation {
     clientId: data.clientId,
     trainerId: data.trainerId,
     weight: data.weight,
-    bodyFatPercentage: data.bodyFatPercentage,
-    muscleMass: data.muscleMass,
-    waist: data.waist,
-    chest: data.chest,
-    arm: data.arm,
-    thigh: data.thigh,
-    bmi: data.bmi,
+    protocols: data.protocols || {},
+    circumferences: data.circumferences || {},
     notes: data.notes,
-    photos: data.photos,
+    photos: data.photos || [],
     createdAt: data.createdAt instanceof Timestamp
       ? data.createdAt.toDate()
       : new Date(data.createdAt),
   };
+}
+
+/** Parse a string to number, return undefined if empty/invalid */
+function parseOpt(value: string): number | undefined {
+  if (!value || value.trim() === '') return undefined;
+  const n = parseFloat(value);
+  return isNaN(n) ? undefined : n;
+}
+
+/** Remove undefined keys from an object */
+function cleanObj(obj: Record<string, unknown>): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (value !== undefined) result[key] = value;
+  }
+  return result;
 }
 
 async function uriToBlob(uri: string): Promise<Blob> {
@@ -58,20 +75,98 @@ async function uriToBlob(uri: string): Promise<Blob> {
   });
 }
 
-async function uploadPhoto(
+/** Upload a single photo and return its download URL */
+async function uploadSinglePhoto(
   clientId: string,
   evaluationId: string,
-  position: 'front' | 'side' | 'back',
+  index: number,
   uri: string
 ): Promise<string> {
   const blob = await uriToBlob(uri);
   const storageRef = ref(
     storage,
-    `clients/${clientId}/evaluations/${evaluationId}/${position}.jpg`
+    `clients/${clientId}/evaluations/${evaluationId}/photo_${index}.jpg`
   );
   const metadata = { contentType: 'image/jpeg' };
   await uploadBytes(storageRef, blob, metadata);
   return getDownloadURL(storageRef);
+}
+
+/** Check if a string is a local file URI (not already uploaded) */
+function isLocalUri(uri: string): boolean {
+  return !uri.startsWith('https://');
+}
+
+/** Upload new photos and keep existing URLs, returns array of all URLs */
+async function uploadPhotos(
+  clientId: string,
+  evaluationId: string,
+  photoUris: string[]
+): Promise<string[]> {
+  const urls: string[] = [];
+  for (let i = 0; i < photoUris.length; i++) {
+    if (isLocalUri(photoUris[i])) {
+      const url = await uploadSinglePhoto(clientId, evaluationId, Date.now() + i, photoUris[i]);
+      urls.push(url);
+    } else {
+      urls.push(photoUris[i]); // already uploaded
+    }
+  }
+  return urls;
+}
+
+/** Build evaluation data from form */
+function buildEvalData(
+  form: CreateEvaluationForm,
+  clientHeight: number
+): Record<string, unknown> {
+  const weight = parseFloat(form.weight);
+  const bmi = clientHeight > 0 ? parseFloat((weight / (clientHeight * clientHeight)).toFixed(1)) : undefined;
+
+  const protocols = cleanObj({
+    pollock3: parseOpt(form.protocols.pollock3),
+    pollock7: parseOpt(form.protocols.pollock7),
+    leanMass: parseOpt(form.protocols.leanMass),
+    fatMass: parseOpt(form.protocols.fatMass),
+    idealWeight: parseOpt(form.protocols.idealWeight),
+    bmi,
+    maxHeartRate: parseOpt(form.protocols.maxHeartRate),
+    waistHipRatio: parseOpt(form.protocols.waistHipRatio),
+    usNavy: parseOpt(form.protocols.usNavy),
+  });
+
+  const circumferences = cleanObj({
+    neck: parseOpt(form.circumferences.neck),
+    chest: parseOpt(form.circumferences.chest),
+    waist: parseOpt(form.circumferences.waist),
+    abdomen: parseOpt(form.circumferences.abdomen),
+    hip: parseOpt(form.circumferences.hip),
+    shoulder: parseOpt(form.circumferences.shoulder),
+    rightForearm: parseOpt(form.circumferences.rightForearm),
+    leftForearm: parseOpt(form.circumferences.leftForearm),
+    rightArmRelaxed: parseOpt(form.circumferences.rightArmRelaxed),
+    leftArmRelaxed: parseOpt(form.circumferences.leftArmRelaxed),
+    rightArmFlexed: parseOpt(form.circumferences.rightArmFlexed),
+    leftArmFlexed: parseOpt(form.circumferences.leftArmFlexed),
+    rightThigh: parseOpt(form.circumferences.rightThigh),
+    leftThigh: parseOpt(form.circumferences.leftThigh),
+    rightCalf: parseOpt(form.circumferences.rightCalf),
+    leftCalf: parseOpt(form.circumferences.leftCalf),
+  });
+
+  const evalData: Record<string, unknown> = {
+    weight,
+    protocols,
+    circumferences,
+  };
+
+  if (form.notes?.trim()) {
+    evalData.notes = form.notes.trim();
+  } else {
+    evalData.notes = null;
+  }
+
+  return evalData;
 }
 
 export const evaluationService = {
@@ -80,50 +175,56 @@ export const evaluationService = {
     clientId: string,
     clientHeight: number,
     form: CreateEvaluationForm,
-    photos?: { front?: string; side?: string; back?: string }
+    photoUris?: string[]
   ): Promise<string> {
-    const weight = parseFloat(form.weight);
-    const bmi = clientHeight > 0 ? weight / (clientHeight * clientHeight) : undefined;
-
-    const evalData: Record<string, unknown> = {
-      clientId,
-      trainerId,
-      weight,
-      bmi: bmi ? parseFloat(bmi.toFixed(1)) : null,
-      createdAt: serverTimestamp(),
-    };
-
-    // Only add optional fields if they have values
-    if (form.bodyFatPercentage) evalData.bodyFatPercentage = parseFloat(form.bodyFatPercentage);
-    if (form.muscleMass) evalData.muscleMass = parseFloat(form.muscleMass);
-    if (form.waist) evalData.waist = parseFloat(form.waist);
-    if (form.chest) evalData.chest = parseFloat(form.chest);
-    if (form.arm) evalData.arm = parseFloat(form.arm);
-    if (form.thigh) evalData.thigh = parseFloat(form.thigh);
-    if (form.notes?.trim()) evalData.notes = form.notes.trim();
+    const evalData = buildEvalData(form, clientHeight);
+    evalData.clientId = clientId;
+    evalData.trainerId = trainerId;
+    evalData.createdAt = serverTimestamp();
 
     const docRef = await addDoc(collection(db, COLLECTION), evalData);
 
     // Upload photos if provided
-    if (photos) {
-      const photoUrls: EvaluationPhotos = {};
-
-      if (photos.front) {
-        photoUrls.front = await uploadPhoto(clientId, docRef.id, 'front', photos.front);
-      }
-      if (photos.side) {
-        photoUrls.side = await uploadPhoto(clientId, docRef.id, 'side', photos.side);
-      }
-      if (photos.back) {
-        photoUrls.back = await uploadPhoto(clientId, docRef.id, 'back', photos.back);
-      }
-
-      if (Object.keys(photoUrls).length > 0) {
-        await updateDoc(doc(db, COLLECTION, docRef.id), { photos: photoUrls });
+    if (photoUris && photoUris.length > 0) {
+      const urls = await uploadPhotos(clientId, docRef.id, photoUris);
+      if (urls.length > 0) {
+        await updateDoc(doc(db, COLLECTION, docRef.id), { photos: urls });
       }
     }
 
     return docRef.id;
+  },
+
+  async update(
+    evaluationId: string,
+    clientId: string,
+    clientHeight: number,
+    form: CreateEvaluationForm,
+    photoUris?: string[]
+  ): Promise<void> {
+    const evalData = buildEvalData(form, clientHeight);
+
+    // Upload new photos
+    if (photoUris) {
+      const urls = await uploadPhotos(clientId, evaluationId, photoUris);
+      evalData.photos = urls;
+    }
+
+    await updateDoc(doc(db, COLLECTION, evaluationId), evalData);
+  },
+
+  async remove(evaluationId: string, clientId: string): Promise<void> {
+    // Delete photos from storage
+    try {
+      const folderRef = ref(storage, `clients/${clientId}/evaluations/${evaluationId}`);
+      const list = await listAll(folderRef);
+      await Promise.all(list.items.map((item) => deleteObject(item)));
+    } catch {
+      // Folder may not exist, ignore
+    }
+
+    // Delete the Firestore document
+    await deleteDoc(doc(db, COLLECTION, evaluationId));
   },
 
   async getById(evaluationId: string): Promise<Evaluation | null> {
