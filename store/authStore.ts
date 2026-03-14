@@ -10,7 +10,7 @@ interface AuthState {
 
   // Actions
   initialize: () => () => void;
-  signUp: (email: string, password: string, name: string) => Promise<void>;
+  signUp: (email: string, password: string, name: string, photoUri?: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   logOut: () => Promise<void>;
   clearError: () => void;
@@ -29,10 +29,10 @@ export const useAuthStore = create<AuthState>((set) => ({
     return unsubscribe;
   },
 
-  signUp: async (email, password, name) => {
+  signUp: async (email, password, name, photoUri) => {
     set({ isLoading: true, error: null });
     try {
-      await authService.signUp(email, password, name);
+      await authService.signUp(email, password, name, photoUri);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Signup failed';
       set({ error: message, isLoading: false });

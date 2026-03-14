@@ -33,6 +33,8 @@ export const pt = {
     confirmPasswordPlaceholder: 'Digite a senha novamente',
     passwordsDoNotMatch: 'As senhas não coincidem',
     hasAccount: 'Já tem uma conta? ',
+    profilePhoto: 'Foto de Perfil',
+    addProfilePhoto: 'Adicionar Foto',
   },
 
   // Dashboard
@@ -53,6 +55,11 @@ export const pt = {
     title: 'Perfil',
     account: 'CONTA',
     editProfile: 'Editar Perfil',
+    displayName: 'Nome',
+    displayNamePlaceholder: 'Seu nome',
+    saveProfile: 'Salvar',
+    profileUpdated: 'Perfil atualizado com sucesso!',
+    errorUpdateProfile: 'Falha ao atualizar perfil.',
     notifications: 'Notificações',
     privacy: 'Privacidade',
     app: 'APP',

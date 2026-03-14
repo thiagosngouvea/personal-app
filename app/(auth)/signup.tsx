@@ -1,20 +1,23 @@
+import { Button, Input } from '@/components/ui';
+import { BorderRadius, FontSize, Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
+import { useTranslation } from '@/i18n';
+import { useAuthStore } from '@/store/authStore';
+import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
+import { router } from 'expo-router';
 import React, { useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
+  Alert,
+  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  StyleSheet,
+  Text,
   TouchableOpacity,
+  View,
 } from 'react-native';
-import { router } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '@/hooks/useTheme';
-import { useAuthStore } from '@/store/authStore';
-import { useTranslation } from '@/i18n';
-import { Button, Input } from '@/components/ui';
-import { FontSize, Spacing, BorderRadius } from '@/constants/theme';
 
 export default function SignupScreen() {
   const colors = useTheme();
@@ -25,6 +28,7 @@ export default function SignupScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [photoUri, setPhotoUri] = useState<string | undefined>();
 
   const isValid =
     name.trim().length > 0 &&
@@ -32,11 +36,51 @@ export default function SignupScreen() {
     password.length >= 6 &&
     password === confirmPassword;
 
+  const pickPhoto = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+    if (!result.canceled) {
+      setPhotoUri(result.assets[0].uri);
+    }
+  };
+
+  const takePhoto = async () => {
+    const permission = await ImagePicker.requestCameraPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert(t.evaluation.permissionNeeded, t.evaluation.cameraPermission);
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+    if (!result.canceled) {
+      setPhotoUri(result.assets[0].uri);
+    }
+  };
+
+  const showPhotoOptions = () => {
+    Alert.alert(
+      t.auth.profilePhoto,
+      t.evaluation.choosePhotoSource,
+      [
+        { text: t.evaluation.camera, onPress: takePhoto },
+        { text: t.evaluation.gallery, onPress: pickPhoto },
+        { text: t.common.cancel, style: 'cancel' },
+      ]
+    );
+  };
+
   const handleSignup = async () => {
     if (!isValid) return;
     clearError();
     try {
-      await signUp(email.trim(), password, name.trim());
+      await signUp(email.trim(), password, name.trim(), photoUri);
       router.replace('/(app)/(tabs)');
     } catch {
       // Error is handled in the store
@@ -53,21 +97,36 @@ export default function SignupScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
+        {/* Header with Photo */}
         <View style={styles.header}>
-          <View
-            style={[
-              styles.logoContainer,
-              { backgroundColor: colors.accent + '15' },
-            ]}
-          >
-            <Ionicons name="person-add" size={36} color={colors.accent} />
-          </View>
+
           <Text style={[styles.title, { color: colors.text }]}>
             {t.auth.createAccount}
           </Text>
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
             {t.auth.signUpSubtitle}
+          </Text>
+          <TouchableOpacity onPress={showPhotoOptions} activeOpacity={0.7} style={styles.avatarContainer}>
+            {photoUri ? (
+              <Image source={{ uri: photoUri }} style={styles.avatarPreview} />
+            ) : (
+              <View
+                style={[
+                  styles.avatarPlaceholder,
+                  { backgroundColor: colors.accent + '15', borderColor: colors.border },
+                ]}
+              >
+                <Ionicons name="person-add" size={36} color={colors.accent} />
+              </View>
+            )}
+          </TouchableOpacity>
+          <TouchableOpacity onPress={showPhotoOptions} activeOpacity={0.7}>
+            <Text style={[styles.photoAction, { color: colors.primary }]}>
+              {photoUri ? t.client.changePhoto : t.auth.addProfilePhoto}
+            </Text>
+          </TouchableOpacity>
+          <Text style={[styles.optionalLabel, { color: colors.textTertiary }]}>
+            {t.client.optional}
           </Text>
         </View>
 
@@ -162,13 +221,34 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: Spacing.xxxl,
   },
-  logoContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+  avatarContainer: {
+    alignItems: 'center',
+    marginTop: Spacing.sm,
+  },
+  avatarPreview: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    marginBottom: Spacing.sm,
+  },
+  avatarPlaceholder: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    borderWidth: 2,
+    borderStyle: 'dashed',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing.sm,
+  },
+  photoAction: {
+    fontSize: FontSize.sm,
+    fontWeight: '600',
+  },
+  optionalLabel: {
+    fontSize: FontSize.xs,
+    marginTop: 2,
+    marginBottom: Spacing.lg,
   },
   title: {
     fontSize: FontSize.xxxl,

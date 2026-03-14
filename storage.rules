@@ -1,11 +1,20 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
+    // Trainer profile photos
+    match /trainers/{uid}/{photo} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null
+        && request.auth.uid == uid
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+
     // Client profile photos
     match /clients/{clientId}/{photo} {
       allow read: if request.auth != null;
       allow write: if request.auth != null
-        && request.resource.size < 5 * 1024 * 1024  // Max 5MB
+        && request.resource.size < 5 * 1024 * 1024
         && request.resource.contentType.matches('image/.*');
     }
 

@@ -35,6 +35,8 @@ export const en: Translations = {
     confirmPasswordPlaceholder: 'Re-enter password',
     passwordsDoNotMatch: 'Passwords do not match',
     hasAccount: 'Already have an account? ',
+    profilePhoto: 'Profile Photo',
+    addProfilePhoto: 'Add Photo',
   },
 
   // Dashboard
@@ -55,6 +57,11 @@ export const en: Translations = {
     title: 'Profile',
     account: 'ACCOUNT',
     editProfile: 'Edit Profile',
+    displayName: 'Name',
+    displayNamePlaceholder: 'Your name',
+    saveProfile: 'Save',
+    profileUpdated: 'Profile updated successfully!',
+    errorUpdateProfile: 'Failed to update profile.',
     notifications: 'Notifications',
     privacy: 'Privacy',
     app: 'APP',
