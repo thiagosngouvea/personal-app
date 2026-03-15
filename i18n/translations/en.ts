@@ -15,6 +15,18 @@ export const en: Translations = {
     years: 'years',
   },
 
+  // AI Analysis
+  ai: {
+    analyzeEvaluation: '✨ AI Analysis',
+    analyzing: 'Analyzing with AI...',
+    analysisTitle: 'Smart Analysis',
+    analysisError: 'Could not generate analysis. Please try again.',
+    notConfigured: 'Gemini API key not configured. Add EXPO_PUBLIC_GEMINI_API_KEY to .env',
+    retry: 'Try Again',
+    close: 'Close',
+    poweredBy: 'Powered by Gemini AI',
+  },
+
   // Auth
   auth: {
     welcomeBack: 'Welcome Back',

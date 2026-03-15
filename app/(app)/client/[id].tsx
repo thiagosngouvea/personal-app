@@ -10,6 +10,8 @@ import {
   Alert,
   Image,
   Linking,
+  Modal,
+  ActivityIndicator,
 } from 'react-native';
 import { router, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,7 +20,9 @@ import { LineChart } from 'react-native-chart-kit';
 import { useTheme, useIsDark } from '@/hooks/useTheme';
 import { clientService } from '@/services/clientService';
 import { evaluationService } from '@/services/evaluationService';
+import { aiService } from '@/services/aiService';
 import { useTranslation } from '@/i18n';
+import { useAppStore } from '@/store/appStore';
 import { Client, Evaluation } from '@/types';
 import { Loading, Card, EmptyState, Button } from '@/components/ui';
 import { FontSize, Spacing, BorderRadius } from '@/constants/theme';
@@ -375,6 +379,7 @@ export default function ClientDetailScreen() {
               <EvaluationCard
                 key={evaluation.id}
                 evaluation={evaluation}
+                client={client!}
                 colors={colors}
                 t={t}
                 formatDate={formatDate}
@@ -395,6 +400,7 @@ export default function ClientDetailScreen() {
 
 function EvaluationCard({
   evaluation,
+  client,
   colors,
   t,
   formatDate,
@@ -402,6 +408,7 @@ function EvaluationCard({
   onDelete,
 }: {
   evaluation: Evaluation;
+  client: Client;
   colors: ReturnType<typeof useTheme>;
   t: ReturnType<typeof import('@/i18n').useTranslation>;
   formatDate: (date: Date) => string;
@@ -409,10 +416,34 @@ function EvaluationCard({
   onDelete: () => void;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiResult, setAiResult] = useState<string | null>(null);
+  const [showAiModal, setShowAiModal] = useState(false);
+  const language = useAppStore((s) => s.language);
   const p = evaluation.protocols || {};
   const c = evaluation.circumferences || {};
   const hasCircumferences = Object.values(c).some((v) => v != null && v > 0);
   const hasPhotos = evaluation.photos && evaluation.photos.length > 0;
+
+  const handleAiAnalysis = async () => {
+    if (!aiService.isConfigured()) {
+      Alert.alert('⚠️', t.ai.notConfigured);
+      return;
+    }
+    setAiLoading(true);
+    setShowAiModal(true);
+    try {
+      const result = await aiService.analyzeEvaluation(client, evaluation, language);
+      setAiResult(result);
+    } catch (err) {
+      console.error('AI analysis error:', err);
+      setAiResult(null);
+      Alert.alert(t.common.error, t.ai.analysisError);
+      setShowAiModal(false);
+    } finally {
+      setAiLoading(false);
+    }
+  };
 
   return (
     <Card style={styles.evalCard}>
@@ -513,6 +544,21 @@ function EvaluationCard({
             </Text>
           )}
 
+          {/* AI Analysis Button */}
+          <TouchableOpacity
+            onPress={handleAiAnalysis}
+            activeOpacity={0.7}
+            style={[styles.aiBtn, { backgroundColor: colors.primary }]}
+          >
+            {aiLoading ? (
+              <ActivityIndicator size="small" color="#FFF" />
+            ) : (
+              <>
+                <Text style={styles.aiBtnText}>{t.ai.analyzeEvaluation}</Text>
+              </>
+            )}
+          </TouchableOpacity>
+
           {/* Action Buttons */}
           <View style={styles.actionRow}>
             <TouchableOpacity
@@ -538,6 +584,72 @@ function EvaluationCard({
           </View>
         </View>
       )}
+
+      {/* AI Analysis Modal */}
+      <Modal
+        visible={showAiModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowAiModal(false)}
+      >
+        <View style={[aiStyles.modal, { backgroundColor: colors.background }]}>
+          {/* Modal Header */}
+          <View style={[aiStyles.modalHeader, { borderBottomColor: colors.border }]}>
+            <Text style={[aiStyles.modalTitle, { color: colors.text }]}>
+              {t.ai.analysisTitle}
+            </Text>
+            <TouchableOpacity onPress={() => setShowAiModal(false)} activeOpacity={0.7}>
+              <Ionicons name="close" size={24} color={colors.textSecondary} />
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView
+            style={aiStyles.modalScroll}
+            contentContainerStyle={aiStyles.modalContent}
+            showsVerticalScrollIndicator={false}
+          >
+            {aiLoading ? (
+              <View style={aiStyles.loadingContainer}>
+                <ActivityIndicator size="large" color={colors.primary} />
+                <Text style={[aiStyles.loadingText, { color: colors.textSecondary }]}>
+                  {t.ai.analyzing}
+                </Text>
+              </View>
+            ) : aiResult ? (
+              <>
+                <Text style={[aiStyles.analysisText, { color: colors.text }]}>
+                  {aiResult}
+                </Text>
+                <View style={[aiStyles.footer, { borderTopColor: colors.border }]}>
+                  <Ionicons name="sparkles" size={14} color={colors.textTertiary} />
+                  <Text style={[aiStyles.footerText, { color: colors.textTertiary }]}>
+                    {t.ai.poweredBy}
+                  </Text>
+                </View>
+              </>
+            ) : null}
+          </ScrollView>
+
+          <View style={[aiStyles.modalFooter, { borderTopColor: colors.border, backgroundColor: colors.background }]}>
+            {!aiLoading && !aiResult && (
+              <TouchableOpacity
+                onPress={handleAiAnalysis}
+                style={[aiStyles.retryBtn, { backgroundColor: colors.primary }]}
+                activeOpacity={0.7}
+              >
+                <Text style={aiStyles.retryBtnText}>{t.ai.retry}</Text>
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity
+              onPress={() => setShowAiModal(false)}
+              style={[aiStyles.closeBtn, { backgroundColor: colors.surfaceElevated }]}
+              activeOpacity={0.7}
+            >
+              <Text style={[aiStyles.closeBtnText, { color: colors.textSecondary }]}>{t.ai.close}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </Card>
   );
 }
@@ -770,5 +882,95 @@ const styles = StyleSheet.create({
   actionBtnText: {
     fontSize: FontSize.sm,
     fontWeight: '600',
+  },
+  aiBtn: {
+    marginTop: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  aiBtnText: {
+    fontSize: FontSize.sm,
+    fontWeight: '700',
+    color: '#FFF',
+  },
+});
+
+const aiStyles = StyleSheet.create({
+  modal: {
+    flex: 1,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.lg,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  modalTitle: {
+    fontSize: FontSize.xl,
+    fontWeight: '700',
+  },
+  modalScroll: {
+    flex: 1,
+  },
+  modalContent: {
+    padding: Spacing.xl,
+    paddingBottom: Spacing.huge,
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: Spacing.huge,
+    gap: Spacing.lg,
+  },
+  loadingText: {
+    fontSize: FontSize.md,
+    textAlign: 'center',
+  },
+  analysisText: {
+    fontSize: FontSize.md,
+    lineHeight: 24,
+  },
+  footer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    marginTop: Spacing.xl,
+    paddingTop: Spacing.md,
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  footerText: {
+    fontSize: FontSize.xs,
+  },
+  modalFooter: {
+    flexDirection: 'row',
+    gap: Spacing.md,
+    padding: Spacing.xl,
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  retryBtn: {
+    flex: 1,
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.md,
+    alignItems: 'center',
+  },
+  retryBtnText: {
+    color: '#FFF',
+    fontWeight: '600',
+    fontSize: FontSize.md,
+  },
+  closeBtn: {
+    flex: 1,
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.md,
+    alignItems: 'center',
+  },
+  closeBtnText: {
+    fontWeight: '600',
+    fontSize: FontSize.md,
   },
 });

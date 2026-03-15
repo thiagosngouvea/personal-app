@@ -13,6 +13,18 @@ export const pt = {
     years: 'anos',
   },
 
+  // AI Analysis
+  ai: {
+    analyzeEvaluation: '✨ Análise IA',
+    analyzing: 'Analisando com IA...',
+    analysisTitle: 'Análise Inteligente',
+    analysisError: 'Não foi possível gerar a análise. Tente novamente.',
+    notConfigured: 'Chave da API Gemini não configurada. Adicione EXPO_PUBLIC_GEMINI_API_KEY no .env',
+    retry: 'Tentar Novamente',
+    close: 'Fechar',
+    poweredBy: 'Powered by Gemini AI',
+  },
+
   // Auth
   auth: {
     welcomeBack: 'Bem-vindo de volta',
