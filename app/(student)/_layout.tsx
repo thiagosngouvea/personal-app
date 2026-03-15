@@ -1,9 +1,9 @@
 import { Redirect, Stack } from 'expo-router';
 import { useAuthStore } from '@/store/authStore';
-import { useTranslation } from '@/i18n';
 import { Loading } from '@/components/ui';
+import { useTranslation } from '@/i18n';
 
-export default function AppLayout() {
+export default function StudentLayout() {
   const { user, isInitialized, role } = useAuthStore();
   const t = useTranslation();
 
@@ -15,17 +15,13 @@ export default function AppLayout() {
     return <Redirect href="/(auth)/login" />;
   }
 
-  // Students get their own layout
-  if (role === 'student') {
-    return <Redirect href={'/(student)' as any} />;
+  if (role === 'trainer') {
+    return <Redirect href="/(app)/(tabs)" />;
   }
 
   return (
     <Stack screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
-      <Stack.Screen name="(tabs)" />
-      <Stack.Screen name="client" />
-      <Stack.Screen name="evaluation" />
-      <Stack.Screen name="workout" />
+      <Stack.Screen name="index" />
     </Stack>
   );
 }

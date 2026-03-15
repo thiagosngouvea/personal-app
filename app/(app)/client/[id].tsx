@@ -21,9 +21,12 @@ import { useTheme, useIsDark } from '@/hooks/useTheme';
 import { clientService } from '@/services/clientService';
 import { evaluationService } from '@/services/evaluationService';
 import { aiService } from '@/services/aiService';
+import { workoutService } from '@/services/workoutService';
+import { studentAuthService } from '@/services/studentAuthService';
+import { useAuthStore } from '@/store/authStore';
 import { useTranslation } from '@/i18n';
 import { useAppStore } from '@/store/appStore';
-import { Client, Evaluation } from '@/types';
+import { Client, Evaluation, Workout } from '@/types';
 import { Loading, Card, EmptyState, Button } from '@/components/ui';
 import { FontSize, Spacing, BorderRadius } from '@/constants/theme';
 
@@ -38,18 +41,23 @@ export default function ClientDetailScreen() {
 
   const [client, setClient] = useState<Client | null>(null);
   const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
+  const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [creatingStudentAccess, setCreatingStudentAccess] = useState(false);
+  const user = useAuthStore((s) => s.user);
 
   const loadData = useCallback(async () => {
     if (!id) return;
     try {
-      const [c, evals] = await Promise.all([
+      const [c, evals, wkts] = await Promise.all([
         clientService.getById(id),
         evaluationService.getAllByClient(id),
+        workoutService.listByClient(id),
       ]);
       setClient(c);
       setEvaluations(evals);
+      setWorkouts(wkts);
     } catch (err) {
       console.error('Failed to load client:', err);
     } finally {
@@ -113,6 +121,77 @@ export default function ClientDetailScreen() {
         evaluationId: evaluation.id,
       },
     });
+  };
+
+  const handleNewWorkout = () => {
+    router.push({
+      pathname: '/(app)/workout/new',
+      params: { clientId: id },
+    });
+  };
+
+  const handleEditWorkout = (workout: Workout) => {
+    router.push({
+      pathname: '/(app)/workout/new',
+      params: { clientId: id, workoutId: workout.id },
+    });
+  };
+
+  const handleDeleteWorkout = (workout: Workout) => {
+    Alert.alert(t.workout.deleteWorkout, t.workout.deleteWorkoutConfirm, [
+      { text: t.common.cancel, style: 'cancel' },
+      {
+        text: t.common.delete, style: 'destructive',
+        onPress: async () => {
+          try {
+            await workoutService.delete(workout.id);
+            setWorkouts((prev) => prev.filter((w) => w.id !== workout.id));
+          } catch { Alert.alert(t.common.error, t.workout.errorSave); }
+        },
+      },
+    ]);
+  };
+
+  const handleSetActiveWorkout = async (workout: Workout) => {
+    try {
+      await workoutService.setActive(id, workout.id);
+      setWorkouts((prev) => prev.map((w) => ({ ...w, active: w.id === workout.id })));
+    } catch { Alert.alert(t.common.error, t.workout.errorSave); }
+  };
+
+  const handleCreateStudentAccess = async () => {
+    if (!client?.email) {
+      Alert.alert(t.common.error, 'O cliente precisa ter um e-mail cadastrado.');
+      return;
+    }
+    if (!user?.uid) return;
+    Alert.alert(
+      t.student.createStudentAccess,
+      `Criar acesso de aluno para ${client.name} (${client.email})?`,
+      [
+        { text: t.common.cancel, style: 'cancel' },
+        {
+          text: 'Criar',
+          onPress: async () => {
+            setCreatingStudentAccess(true);
+            try {
+              const { tempPassword } = await studentAuthService.createStudentAccount(
+                client.email!, id, user.uid, client.name
+              );
+              Alert.alert(
+                t.student.accessCreated,
+                `${t.student.accessCreatedMessage}${tempPassword}\n\n${t.student.shareWithStudent}`
+              );
+            } catch (err) {
+              console.error(err);
+              Alert.alert(t.common.error, t.student.errorCreateAccess);
+            } finally {
+              setCreatingStudentAccess(false);
+            }
+          },
+        },
+      ]
+    );
   };
 
   if (loading) return <Loading message={t.client.loadingClient} />;
@@ -362,6 +441,86 @@ export default function ClientDetailScreen() {
           }
         />
 
+        {/* Workouts Section */}
+        <View style={styles.section}>
+          <View style={styles.sectionRow}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>
+              {t.workout.title}
+            </Text>
+            <TouchableOpacity
+              onPress={handleNewWorkout}
+              style={[styles.sectionBtn, { backgroundColor: colors.primary + '15' }]}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="add" size={16} color={colors.primary} />
+              <Text style={[styles.sectionBtnText, { color: colors.primary }]}>{t.workout.newWorkout}</Text>
+            </TouchableOpacity>
+          </View>
+
+          {workouts.length === 0 ? (
+            <EmptyState
+              icon="barbell-outline"
+              title={t.workout.noWorkoutsYet}
+              description={t.workout.noWorkoutsDescription}
+            />
+          ) : (
+            workouts.map((workout) => (
+              <Card key={workout.id} style={styles.workoutCard}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 4 }}>
+                  <Text style={[styles.workoutCardName, { color: colors.text }]}>{workout.name}</Text>
+                  {workout.active && (
+                    <View style={[styles.activeBadge, { backgroundColor: colors.accent + '20' }]}>
+                      <Text style={[styles.activeBadgeText, { color: colors.accent }]}>{t.workout.active}</Text>
+                    </View>
+                  )}
+                  {workout.aiGenerated && (
+                    <View style={[styles.aiBadgeSmall, { backgroundColor: colors.primary + '15' }]}>
+                      <Ionicons name="sparkles" size={10} color={colors.primary} />
+                      <Text style={[styles.aiBadgeSmallText, { color: colors.primary }]}>{t.workout.aiGenerated}</Text>
+                    </View>
+                  )}
+                </View>
+                {workout.description ? (
+                  <Text style={[styles.workoutCardDesc, { color: colors.textSecondary }]} numberOfLines={1}>
+                    {workout.description}
+                  </Text>
+                ) : null}
+                <Text style={[styles.workoutCardMeta, { color: colors.textTertiary }]}>
+                  {workout.exercises.length} exercícios{workout.daysPerWeek ? ` · ${workout.daysPerWeek}x/sem` : ''}
+                </Text>
+                <View style={[styles.workoutActions, { borderTopColor: colors.border }]}>
+                  {!workout.active && (
+                    <TouchableOpacity
+                      onPress={() => handleSetActiveWorkout(workout)}
+                      style={[styles.wkActionBtn, { backgroundColor: colors.accent + '15' }]}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons name="checkmark-circle-outline" size={15} color={colors.accent} />
+                      <Text style={[styles.wkActionText, { color: colors.accent }]}>{t.workout.setActive}</Text>
+                    </TouchableOpacity>
+                  )}
+                  <TouchableOpacity
+                    onPress={() => handleEditWorkout(workout)}
+                    style={[styles.wkActionBtn, { backgroundColor: colors.primary + '15' }]}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name="create-outline" size={15} color={colors.primary} />
+                    <Text style={[styles.wkActionText, { color: colors.primary }]}>{t.common.edit}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => handleDeleteWorkout(workout)}
+                    style={[styles.wkActionBtn, { backgroundColor: colors.error + '15' }]}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name="trash-outline" size={15} color={colors.error} />
+                    <Text style={[styles.wkActionText, { color: colors.error }]}>{t.common.delete}</Text>
+                  </TouchableOpacity>
+                </View>
+              </Card>
+            ))
+          )}
+        </View>
+
         {/* Evaluations List */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>
@@ -389,6 +548,25 @@ export default function ClientDetailScreen() {
             ))
           )}
         </View>
+
+        {/* Student Access */}
+        {client.email ? (
+          <TouchableOpacity
+            onPress={handleCreateStudentAccess}
+            disabled={creatingStudentAccess}
+            style={[styles.studentAccessBtn, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}
+            activeOpacity={0.7}
+          >
+            {creatingStudentAccess ? (
+              <ActivityIndicator size="small" color={colors.primary} />
+            ) : (
+              <Ionicons name="person-add-outline" size={18} color={colors.primary} />
+            )}
+            <Text style={[styles.studentAccessText, { color: colors.primary }]}>
+              {t.student.createStudentAccess}
+            </Text>
+          </TouchableOpacity>
+        ) : null}
       </ScrollView>
     </View>
   );
@@ -895,6 +1073,24 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#FFF',
   },
+  // Workout card styles
+  sectionRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: Spacing.md },
+  sectionBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: Spacing.md, paddingVertical: 6, borderRadius: BorderRadius.full },
+  sectionBtnText: { fontSize: FontSize.sm, fontWeight: '600' },
+  workoutCard: { marginBottom: Spacing.md },
+  workoutCardName: { fontSize: FontSize.md, fontWeight: '700' },
+  workoutCardDesc: { fontSize: FontSize.sm, marginBottom: 2 },
+  workoutCardMeta: { fontSize: FontSize.xs, marginTop: 2, marginBottom: Spacing.sm },
+  activeBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: BorderRadius.full },
+  activeBadgeText: { fontSize: FontSize.xs, fontWeight: '700' },
+  aiBadgeSmall: { flexDirection: 'row', alignItems: 'center', gap: 2, paddingHorizontal: 6, paddingVertical: 2, borderRadius: BorderRadius.full },
+  aiBadgeSmallText: { fontSize: 10, fontWeight: '600' },
+  workoutActions: { flexDirection: 'row', gap: Spacing.sm, marginTop: Spacing.sm, paddingTop: Spacing.sm, borderTopWidth: StyleSheet.hairlineWidth },
+  wkActionBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: Spacing.sm, paddingVertical: 5, borderRadius: BorderRadius.sm },
+  wkActionText: { fontSize: FontSize.xs, fontWeight: '600' },
+  // Student access
+  studentAccessBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: Spacing.sm, padding: Spacing.md, borderRadius: BorderRadius.md, borderWidth: 1, marginBottom: Spacing.xl },
+  studentAccessText: { fontSize: FontSize.sm, fontWeight: '600' },
 });
 
 const aiStyles = StyleSheet.create({

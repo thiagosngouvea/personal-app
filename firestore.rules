@@ -2,14 +2,18 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper: check if the user is authenticated
     function isAuth() {
       return request.auth != null;
     }
 
-    // Helper: check if the user owns the resource
-    function isOwner(trainerId) {
+    function isTrainer(trainerId) {
       return isAuth() && request.auth.uid == trainerId;
+    }
+
+    function isStudent(clientId) {
+      return isAuth() &&
+        exists(/databases/$(database)/documents/students/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/students/$(request.auth.uid)).data.clientId == clientId;
     }
 
     // Trainers collection
@@ -17,17 +21,37 @@ service cloud.firestore {
       allow read, write: if isAuth() && request.auth.uid == trainerId;
     }
 
+    // Students collection (created by trainers, read by students themselves)
+    match /students/{studentId} {
+      allow read: if isAuth() && (request.auth.uid == studentId ||
+        resource.data.trainerId == request.auth.uid);
+      allow create: if isAuth() && request.resource.data.trainerId == request.auth.uid;
+      allow update, delete: if isAuth() && resource.data.trainerId == request.auth.uid;
+    }
+
     // Clients collection
     match /clients/{clientId} {
       allow create: if isAuth() && request.resource.data.trainerId == request.auth.uid;
-      allow read, update, delete: if isAuth() && resource.data.trainerId == request.auth.uid;
+      allow read, update, delete: if isAuth() &&
+        (resource.data.trainerId == request.auth.uid || isStudent(clientId));
       allow list: if isAuth();
     }
 
     // Evaluations collection
     match /evaluations/{evaluationId} {
       allow create: if isAuth() && request.resource.data.trainerId == request.auth.uid;
-      allow read, update, delete: if isAuth() && resource.data.trainerId == request.auth.uid;
+      allow read, update, delete: if isAuth() &&
+        (resource.data.trainerId == request.auth.uid ||
+         isStudent(resource.data.clientId));
+      allow list: if isAuth();
+    }
+
+    // Workouts collection
+    match /workouts/{workoutId} {
+      allow create: if isAuth() && request.resource.data.trainerId == request.auth.uid;
+      allow read, update, delete: if isAuth() &&
+        (resource.data.trainerId == request.auth.uid ||
+         isStudent(resource.data.clientId));
       allow list: if isAuth();
     }
   }

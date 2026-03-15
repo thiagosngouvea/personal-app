@@ -29,8 +29,12 @@ export default function LoginScreen() {
     if (!email.trim() || !password.trim()) return;
     clearError();
     try {
-      await signIn(email.trim(), password);
-      router.replace('/(app)/(tabs)');
+      const role = await signIn(email.trim(), password);
+      if (role === 'student') {
+        router.replace('/(student)' as any);
+      } else {
+        router.replace('/(app)/(tabs)');
+      }
     } catch {
       // Error is handled in the store
     }

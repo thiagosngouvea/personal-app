@@ -2,12 +2,63 @@
 // PersonalApp Type Definitions
 // ==========================================
 
+export type UserRole = 'trainer' | 'student';
+
 export interface Trainer {
   uid: string;
   name: string;
   email: string;
+  role: UserRole;
   createdAt: Date;
 }
+
+// A student profile links a Firebase Auth user to a Client record
+export interface StudentProfile {
+  uid: string;        // Firebase Auth UID
+  clientId: string;   // linked Client document ID
+  trainerId: string;
+  email: string;
+  role: 'student';
+  createdAt: Date;
+}
+
+// ==========================================
+// Exercise & Workout
+// ==========================================
+export type MuscleGroup =
+  | 'chest' | 'back' | 'shoulders' | 'biceps' | 'triceps'
+  | 'forearms' | 'core' | 'glutes' | 'quads' | 'hamstrings'
+  | 'calves' | 'cardio' | 'fullBody' | 'other';
+
+export interface Exercise {
+  id: string;
+  name: string;
+  sets: number;
+  reps: string;     // "12", "8-12", "30s", "failure"
+  rest: string;     // "60s", "90s", "2min"
+  muscleGroup?: MuscleGroup;
+  notes?: string;
+}
+
+export type WorkoutGoal = 'hypertrophy' | 'strength' | 'endurance' | 'weightLoss' | 'maintenance' | 'rehabilitation';
+export type WorkoutLevel = 'beginner' | 'intermediate' | 'advanced';
+
+export interface Workout {
+  id: string;
+  clientId: string;
+  trainerId: string;
+  name: string;
+  description?: string;
+  goal?: WorkoutGoal;
+  level?: WorkoutLevel;
+  daysPerWeek?: number;
+  exercises: Exercise[];
+  aiGenerated?: boolean;
+  active?: boolean;     // the "current" workout for the client
+  createdAt: Date;
+}
+
+
 
 export interface Client {
   id: string;
