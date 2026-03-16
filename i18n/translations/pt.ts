@@ -89,6 +89,8 @@ export const pt = {
     clientFullName: 'Nome Completo',
     clientNamePlaceholder: 'Nome completo do cliente',
     age: 'Idade',
+    birthDate: 'Data de Nascimento',
+    birthDatePlaceholder: 'Selecionar data',
     height: 'Altura',
     heightMeters: 'Altura (metros)',
     heightPlaceholder: 'ex: 1,75',

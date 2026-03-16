@@ -26,13 +26,30 @@ import { Client, CreateClientForm } from '@/types';
 const COLLECTION = 'clients';
 const PAGE_SIZE = 20;
 
+/** Calculates age in full years from a birthday date */
+function calcAge(birthDate: Date): number {
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const m = today.getMonth() - birthDate.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
+  return age;
+}
+
 function docToClient(docSnap: DocumentSnapshot): Client {
   const data = docSnap.data()!;
+  let birthDate: Date | undefined;
+  if (data.birthDate) {
+    birthDate = data.birthDate instanceof Timestamp
+      ? data.birthDate.toDate()
+      : new Date(data.birthDate);
+  }
+  const age = birthDate ? calcAge(birthDate) : (data.age ?? 0);
   return {
     id: docSnap.id,
     trainerId: data.trainerId,
     name: data.name,
-    age: data.age,
+    age,
+    birthDate,
     height: data.height,
     gender: data.gender,
     whatsapp: data.whatsapp || undefined,
@@ -72,15 +89,20 @@ export const clientService = {
     form: CreateClientForm,
     photoUri?: string
   ): Promise<{ id: string; photoUrl?: string }> {
+    // Parse birthDate and calculate age
+    const birthDateObj = form.birthDate ? new Date(form.birthDate) : null;
+    const age = birthDateObj ? calcAge(birthDateObj) : parseInt(form.age, 10);
+
     const clientData: Record<string, unknown> = {
       trainerId,
       name: form.name.trim(),
-      age: parseInt(form.age, 10),
+      age,
       height: parseFloat(form.height),
       gender: form.gender,
       createdAt: serverTimestamp(),
     };
 
+    if (birthDateObj) clientData.birthDate = birthDateObj;
     if (form.whatsapp?.trim()) clientData.whatsapp = form.whatsapp.trim();
     if (form.email?.trim()) clientData.email = form.email.trim();
 
@@ -141,11 +163,19 @@ export const clientService = {
   ): Promise<string | undefined> {
     const updateData: Record<string, unknown> = {};
     if (data.name) updateData.name = data.name.trim();
-    if (data.age) updateData.age = parseInt(data.age, 10);
     if (data.height) updateData.height = parseFloat(data.height);
     if (data.gender) updateData.gender = data.gender;
     if (data.whatsapp !== undefined) updateData.whatsapp = data.whatsapp.trim() || null;
     if (data.email !== undefined) updateData.email = data.email.trim() || null;
+
+    // birthDate takes priority over raw age
+    if (data.birthDate) {
+      const birthDateObj = new Date(data.birthDate);
+      updateData.birthDate = birthDateObj;
+      updateData.age = calcAge(birthDateObj);
+    } else if (data.age) {
+      updateData.age = parseInt(data.age, 10);
+    }
 
     let photoUrl: string | undefined;
     if (photoUri) {

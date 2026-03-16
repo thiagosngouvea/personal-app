@@ -64,8 +64,9 @@ export interface Client {
   id: string;
   trainerId: string;
   name: string;
-  age: number;
-  height: number; // in meters
+  age: number;           // calculated from birthDate (or stored directly for legacy)
+  birthDate?: Date;       // optional for backwards compat with old records
+  height: number;         // in meters
   gender: 'male' | 'female' | 'other';
   whatsapp?: string;
   email?: string;
@@ -226,7 +227,8 @@ export interface Evaluation {
 // ==========================================
 export interface CreateClientForm {
   name: string;
-  age: string;
+  birthDate: string;   // ISO string 'YYYY-MM-DD', replaces raw age field
+  age: string;         // kept for fallback; auto-derived from birthDate
   height: string;
   gender: 'male' | 'female' | 'other';
   whatsapp: string;

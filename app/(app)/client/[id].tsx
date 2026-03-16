@@ -237,13 +237,14 @@ export default function ClientDetailScreen() {
             {client.name}
           </Text>
           <TouchableOpacity
-            onPress={() =>
+                      onPress={() =>
               router.push({
                 pathname: '/(app)/client/new',
                 params: {
                   clientId: client.id,
                   clientName: client.name,
                   clientAge: String(client.age),
+                  clientBirthDate: client.birthDate ? client.birthDate.toISOString().split('T')[0] : '',
                   clientHeight: String(client.height),
                   clientGender: client.gender,
                   clientWhatsapp: client.whatsapp || '',

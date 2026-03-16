@@ -91,6 +91,8 @@ export const en: Translations = {
     clientFullName: 'Full Name',
     clientNamePlaceholder: "Client's full name",
     age: 'Age',
+    birthDate: 'Date of Birth',
+    birthDatePlaceholder: 'Select date',
     height: 'Height',
     heightMeters: 'Height (meters)',
     heightPlaceholder: 'e.g., 1.75',
