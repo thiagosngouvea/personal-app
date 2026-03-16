@@ -38,8 +38,14 @@ function docToEvaluation(docSnap: DocumentSnapshot): Evaluation {
     clientId: data.clientId,
     trainerId: data.trainerId,
     weight: data.weight,
+    anamnesis: data.anamnesis || undefined,
     protocols: data.protocols || {},
+    skinfolds: data.skinfolds || undefined,
     circumferences: data.circumferences || {},
+    posturalAssessment: data.posturalAssessment || undefined,
+    mobilityTests: data.mobilityTests || undefined,
+    strengthTests: data.strengthTests || undefined,
+    cardioTests: data.cardioTests || undefined,
     notes: data.notes,
     photos: data.photos || [],
     createdAt: data.createdAt instanceof Timestamp
@@ -123,6 +129,14 @@ function buildEvalData(
   const weight = parseFloat(form.weight);
   const bmi = clientHeight > 0 ? parseFloat((weight / (clientHeight * clientHeight)).toFixed(1)) : undefined;
 
+  // Anamnesis
+  const anamnesis = cleanObj({
+    injuryHistory: form.anamnesis.injuryHistory.trim() || undefined,
+    healthConditions: form.anamnesis.healthConditions.trim() || undefined,
+    medications: form.anamnesis.medications.trim() || undefined,
+    activityLevel: form.anamnesis.activityLevel || undefined,
+  });
+
   const protocols = cleanObj({
     pollock3: parseOpt(form.protocols.pollock3),
     pollock7: parseOpt(form.protocols.pollock7),
@@ -133,6 +147,19 @@ function buildEvalData(
     maxHeartRate: parseOpt(form.protocols.maxHeartRate),
     waistHipRatio: parseOpt(form.protocols.waistHipRatio),
     usNavy: parseOpt(form.protocols.usNavy),
+  });
+
+  // Skinfolds
+  const skinfolds = cleanObj({
+    chest: parseOpt(form.skinfolds.chest),
+    abdomen: parseOpt(form.skinfolds.abdomen),
+    suprailiac: parseOpt(form.skinfolds.suprailiac),
+    subscapular: parseOpt(form.skinfolds.subscapular),
+    triceps: parseOpt(form.skinfolds.triceps),
+    midaxillary: parseOpt(form.skinfolds.midaxillary),
+    thigh: parseOpt(form.skinfolds.thigh),
+    biceps: parseOpt(form.skinfolds.biceps),
+    medialCalf: parseOpt(form.skinfolds.medialCalf),
   });
 
   const circumferences = cleanObj({
@@ -154,11 +181,60 @@ function buildEvalData(
     leftCalf: parseOpt(form.circumferences.leftCalf),
   });
 
+  // Postural assessment — booleans only saved when true, plus optional notes
+  const pa = form.posturalAssessment;
+  const posturalAssessment = cleanObj({
+    shoulderAsymmetry: pa.shoulderAsymmetry || undefined,
+    scoliosis: pa.scoliosis || undefined,
+    kyphosis: pa.kyphosis || undefined,
+    lordosis: pa.lordosis || undefined,
+    valgusKnee: pa.valgusKnee || undefined,
+    varusKnee: pa.varusKnee || undefined,
+    pronatedFoot: pa.pronatedFoot || undefined,
+    supinatedFoot: pa.supinatedFoot || undefined,
+    notes: pa.notes.trim() || undefined,
+  });
+
+  // Mobility tests
+  const mobilityTests = cleanObj({
+    sitAndReach: parseOpt(form.mobilityTests.sitAndReach),
+    shoulderMobility: form.mobilityTests.shoulderMobility.trim() || undefined,
+    hipMobility: form.mobilityTests.hipMobility.trim() || undefined,
+    ankleMobility: form.mobilityTests.ankleMobility.trim() || undefined,
+    notes: form.mobilityTests.notes.trim() || undefined,
+  });
+
+  // Strength tests
+  const strengthTests = cleanObj({
+    rm1Squat: parseOpt(form.strengthTests.rm1Squat),
+    rm1BenchPress: parseOpt(form.strengthTests.rm1BenchPress),
+    rm1Deadlift: parseOpt(form.strengthTests.rm1Deadlift),
+    pushUps: parseOpt(form.strengthTests.pushUps),
+    sitUps: parseOpt(form.strengthTests.sitUps),
+    plankSeconds: parseOpt(form.strengthTests.plankSeconds),
+    notes: form.strengthTests.notes.trim() || undefined,
+  });
+
+  // Cardio tests
+  const cardioTests = cleanObj({
+    restingHeartRate: parseOpt(form.cardioTests.restingHeartRate),
+    cooperTest: parseOpt(form.cardioTests.cooperTest),
+    walk6MinTest: parseOpt(form.cardioTests.walk6MinTest),
+    notes: form.cardioTests.notes.trim() || undefined,
+  });
+
   const evalData: Record<string, unknown> = {
     weight,
     protocols,
     circumferences,
   };
+
+  if (Object.keys(anamnesis).length > 0) evalData.anamnesis = anamnesis;
+  if (Object.keys(skinfolds).length > 0) evalData.skinfolds = skinfolds;
+  if (Object.keys(posturalAssessment).length > 0) evalData.posturalAssessment = posturalAssessment;
+  if (Object.keys(mobilityTests).length > 0) evalData.mobilityTests = mobilityTests;
+  if (Object.keys(strengthTests).length > 0) evalData.strengthTests = strengthTests;
+  if (Object.keys(cardioTests).length > 0) evalData.cardioTests = cardioTests;
 
   if (form.notes?.trim()) {
     evalData.notes = form.notes.trim();

@@ -73,6 +73,82 @@ export interface Client {
   createdAt: Date;
 }
 
+// ==========================================
+// Anamnesis (Basic Health Data)
+// ==========================================
+export type ActivityLevel = 'sedentary' | 'light' | 'moderate' | 'intense' | 'athlete';
+
+export interface Anamnesis {
+  injuryHistory?: string;
+  healthConditions?: string;
+  medications?: string;
+  activityLevel?: ActivityLevel;
+}
+
+// ==========================================
+// Skinfolds (Dobras Cutâneas — all in mm)
+// ==========================================
+export interface Skinfolds {
+  chest?: number;
+  abdomen?: number;
+  suprailiac?: number;
+  subscapular?: number;
+  triceps?: number;
+  midaxillary?: number;
+  thigh?: number;
+  biceps?: number;
+  medialCalf?: number;
+}
+
+// ==========================================
+// Postural Assessment
+// ==========================================
+export interface PosturalAssessment {
+  shoulderAsymmetry?: boolean;
+  scoliosis?: boolean;
+  kyphosis?: boolean;
+  lordosis?: boolean;
+  valgusKnee?: boolean;
+  varusKnee?: boolean;
+  pronatedFoot?: boolean;
+  supinatedFoot?: boolean;
+  notes?: string;
+}
+
+// ==========================================
+// Mobility & Flexibility Tests
+// ==========================================
+export interface MobilityTests {
+  sitAndReach?: number;       // cm
+  shoulderMobility?: string;  // pass/fail or cm
+  hipMobility?: string;
+  ankleMobility?: string;
+  notes?: string;
+}
+
+// ==========================================
+// Strength Tests
+// ==========================================
+export interface StrengthTests {
+  rm1Squat?: number;         // kg
+  rm1BenchPress?: number;    // kg
+  rm1Deadlift?: number;      // kg
+  pushUps?: number;          // reps
+  sitUps?: number;           // reps
+  plankSeconds?: number;     // seconds
+  notes?: string;
+}
+
+// ==========================================
+// Cardiorespiratory Tests
+// ==========================================
+export interface CardioTests {
+  restingHeartRate?: number;  // bpm
+  cooperTest?: number;        // meters in 12 min
+  walk6MinTest?: number;      // meters in 6 min
+  notes?: string;
+}
+
 // Photos are stored as an array of download URLs
 export type EvaluationPhotos = string[];
 
@@ -121,8 +197,14 @@ export interface Evaluation {
   clientId: string;
   trainerId: string;
   weight: number; // kg
+  anamnesis?: Anamnesis;
   protocols: Protocols;
+  skinfolds?: Skinfolds;
   circumferences: Circumferences;
+  posturalAssessment?: PosturalAssessment;
+  mobilityTests?: MobilityTests;
+  strengthTests?: StrengthTests;
+  cardioTests?: CardioTests;
   notes?: string;
   photos?: EvaluationPhotos; // array of photo URLs
   createdAt: Date;
@@ -170,9 +252,71 @@ export interface ProtocolsForm {
   usNavy: string;
 }
 
+export interface AnamnesisForm {
+  injuryHistory: string;
+  healthConditions: string;
+  medications: string;
+  activityLevel: ActivityLevel | '';
+}
+
+export interface SkinfoldsForm {
+  chest: string;
+  abdomen: string;
+  suprailiac: string;
+  subscapular: string;
+  triceps: string;
+  midaxillary: string;
+  thigh: string;
+  biceps: string;
+  medialCalf: string;
+}
+
+export interface PosturalAssessmentForm {
+  shoulderAsymmetry: boolean;
+  scoliosis: boolean;
+  kyphosis: boolean;
+  lordosis: boolean;
+  valgusKnee: boolean;
+  varusKnee: boolean;
+  pronatedFoot: boolean;
+  supinatedFoot: boolean;
+  notes: string;
+}
+
+export interface MobilityTestsForm {
+  sitAndReach: string;
+  shoulderMobility: string;
+  hipMobility: string;
+  ankleMobility: string;
+  notes: string;
+}
+
+export interface StrengthTestsForm {
+  rm1Squat: string;
+  rm1BenchPress: string;
+  rm1Deadlift: string;
+  pushUps: string;
+  sitUps: string;
+  plankSeconds: string;
+  notes: string;
+}
+
+export interface CardioTestsForm {
+  restingHeartRate: string;
+  cooperTest: string;
+  walk6MinTest: string;
+  notes: string;
+}
+
 export interface CreateEvaluationForm {
   weight: string;
+  anamnesis: AnamnesisForm;
   protocols: ProtocolsForm;
+  skinfolds: SkinfoldsForm;
   circumferences: CircumferencesForm;
+  posturalAssessment: PosturalAssessmentForm;
+  mobilityTests: MobilityTestsForm;
+  strengthTests: StrengthTestsForm;
+  cardioTests: CardioTestsForm;
   notes: string;
 }
