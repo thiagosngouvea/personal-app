@@ -149,6 +149,16 @@ export interface CardioTests {
   notes?: string;
 }
 
+// ==========================================
+// Bone Diameters (Frame Size)
+// ==========================================
+export interface BoneDiameters {
+  wrist?: number;    // cm — estima estrutura corporal
+  elbow?: number;    // cm — biêpicondilo do úmero
+  knee?: number;     // cm — biêpicondilo do fêmur
+  ankle?: number;    // cm
+}
+
 // Photos are stored as an array of download URLs
 export type EvaluationPhotos = string[];
 
@@ -201,12 +211,13 @@ export interface Evaluation {
   protocols: Protocols;
   skinfolds?: Skinfolds;
   circumferences: Circumferences;
+  boneDiameters?: BoneDiameters;
   posturalAssessment?: PosturalAssessment;
   mobilityTests?: MobilityTests;
   strengthTests?: StrengthTests;
   cardioTests?: CardioTests;
   notes?: string;
-  photos?: EvaluationPhotos; // array of photo URLs
+  photos?: EvaluationPhotos;
   createdAt: Date;
 }
 
@@ -308,12 +319,20 @@ export interface CardioTestsForm {
   notes: string;
 }
 
+export interface BoneDiametersForm {
+  wrist: string;
+  elbow: string;
+  knee: string;
+  ankle: string;
+}
+
 export interface CreateEvaluationForm {
   weight: string;
   anamnesis: AnamnesisForm;
   protocols: ProtocolsForm;
   skinfolds: SkinfoldsForm;
   circumferences: CircumferencesForm;
+  boneDiameters: BoneDiametersForm;
   posturalAssessment: PosturalAssessmentForm;
   mobilityTests: MobilityTestsForm;
   strengthTests: StrengthTestsForm;

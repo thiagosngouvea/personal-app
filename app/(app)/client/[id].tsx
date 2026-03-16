@@ -117,7 +117,10 @@ export default function ClientDetailScreen() {
       pathname: '/(app)/evaluation/new',
       params: {
         clientId: evaluation.clientId,
+        clientName: client.name,
+        clientAge: String(client.age),
         clientHeight: client.height.toString(),
+        clientGender: client.gender,
         evaluationId: evaluation.id,
       },
     });
@@ -431,7 +434,13 @@ export default function ClientDetailScreen() {
           onPress={() =>
             router.push({
               pathname: '/(app)/evaluation/new',
-              params: { clientId: id, clientHeight: client.height.toString() },
+              params: {
+                clientId: id,
+                clientName: client.name,
+                clientAge: String(client.age),
+                clientHeight: client.height.toString(),
+                clientGender: client.gender,
+              },
             })
           }
           size="lg"

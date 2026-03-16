@@ -42,6 +42,7 @@ function docToEvaluation(docSnap: DocumentSnapshot): Evaluation {
     protocols: data.protocols || {},
     skinfolds: data.skinfolds || undefined,
     circumferences: data.circumferences || {},
+    boneDiameters: data.boneDiameters || undefined,
     posturalAssessment: data.posturalAssessment || undefined,
     mobilityTests: data.mobilityTests || undefined,
     strengthTests: data.strengthTests || undefined,
@@ -223,6 +224,14 @@ function buildEvalData(
     notes: form.cardioTests.notes.trim() || undefined,
   });
 
+  // Bone diameters
+  const boneDiameters = cleanObj({
+    wrist: parseOpt(form.boneDiameters.wrist),
+    elbow: parseOpt(form.boneDiameters.elbow),
+    knee:  parseOpt(form.boneDiameters.knee),
+    ankle: parseOpt(form.boneDiameters.ankle),
+  });
+
   const evalData: Record<string, unknown> = {
     weight,
     protocols,
@@ -231,6 +240,7 @@ function buildEvalData(
 
   if (Object.keys(anamnesis).length > 0) evalData.anamnesis = anamnesis;
   if (Object.keys(skinfolds).length > 0) evalData.skinfolds = skinfolds;
+  if (Object.keys(boneDiameters).length > 0) evalData.boneDiameters = boneDiameters;
   if (Object.keys(posturalAssessment).length > 0) evalData.posturalAssessment = posturalAssessment;
   if (Object.keys(mobilityTests).length > 0) evalData.mobilityTests = mobilityTests;
   if (Object.keys(strengthTests).length > 0) evalData.strengthTests = strengthTests;

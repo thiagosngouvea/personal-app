@@ -267,6 +267,17 @@ export const pt = {
     walk6MinTest: 'Teste Caminhada 6 Minutos',
     cardioNotes: 'Observações',
     cardioNotesPlaceholder: 'Observações sobre condicionamento...',
+
+    // Bone Diameters
+    boneDiameters: 'DIÂMETROS ÓSSEOS / FRAME SIZE (cm)',
+    wrist: 'Punho',
+    wristPlaceholder: 'cm — estima biotipo',
+    elbow: 'Cotovelo',
+    elbowPlaceholder: 'cm — biêpicondilo do úmero',
+    knee: 'Joelho',
+    kneePlaceholder: 'cm — biêpicondilo do fêmur',
+    ankle: 'Tornozelo',
+    ankleDiamPlaceholder: 'cm',
   },
 
   // Tabs

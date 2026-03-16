@@ -269,6 +269,17 @@ export const en: Translations = {
     walk6MinTest: '6-Minute Walk Test',
     cardioNotes: 'Notes',
     cardioNotesPlaceholder: 'Cardiorespiratory observations...',
+
+    // Bone Diameters
+    boneDiameters: 'BONE DIAMETERS / FRAME SIZE (cm)',
+    wrist: 'Wrist',
+    wristPlaceholder: 'cm — estimates body frame',
+    elbow: 'Elbow',
+    elbowPlaceholder: 'cm — biepicondylar humerus',
+    knee: 'Knee',
+    kneePlaceholder: 'cm — biepicondylar femur',
+    ankle: 'Ankle',
+    ankleDiamPlaceholder: 'cm',
   },
 
   // Tabs

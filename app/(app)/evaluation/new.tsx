@@ -26,6 +26,7 @@ import {
   ProtocolsForm,
   AnamnesisForm,
   SkinfoldsForm,
+  BoneDiametersForm,
   PosturalAssessmentForm,
   MobilityTestsForm,
   StrengthTestsForm,
@@ -62,6 +63,10 @@ const emptyCircumferences: CircumferencesForm = {
   rightCalf: '', leftCalf: '',
 };
 
+const emptyBoneDiameters: BoneDiametersForm = {
+  wrist: '', elbow: '', knee: '', ankle: '',
+};
+
 const emptyPostural: PosturalAssessmentForm = {
   shoulderAsymmetry: false, scoliosis: false, kyphosis: false, lordosis: false,
   valgusKnee: false, varusKnee: false, pronatedFoot: false, supinatedFoot: false,
@@ -94,11 +99,22 @@ const ACTIVITY_OPTIONS: ActivityOption[] = [
 // ─── Component ─────────────────────────────────────────────────────────────────
 
 export default function NewEvaluationScreen() {
-  const { clientId, clientHeight, evaluationId } = useLocalSearchParams<{
+  const {
+    clientId,
+    clientName,
+    clientAge,
+    clientHeight,
+    clientGender,
+    evaluationId,
+  } = useLocalSearchParams<{
     clientId: string;
+    clientName?: string;
+    clientAge?: string;
     clientHeight: string;
+    clientGender?: string;
     evaluationId?: string;
   }>();
+
   const colors = useTheme();
   const insets = useSafeAreaInsets();
   const user = useAuthStore((s) => s.user);
@@ -115,6 +131,7 @@ export default function NewEvaluationScreen() {
     protocols: { ...emptyProtocols },
     skinfolds: { ...emptySkinfolds },
     circumferences: { ...emptyCircumferences },
+    boneDiameters: { ...emptyBoneDiameters },
     posturalAssessment: { ...emptyPostural },
     mobilityTests: { ...emptyMobility },
     strengthTests: { ...emptyStrength },
@@ -129,6 +146,7 @@ export default function NewEvaluationScreen() {
   const [showProtocols, setShowProtocols] = useState(false);
   const [showSkinfolds, setShowSkinfolds] = useState(false);
   const [showCircumferences, setShowCircumferences] = useState(false);
+  const [showBoneDiameters, setShowBoneDiameters] = useState(false);
   const [showPostural, setShowPostural] = useState(false);
   const [showMobility, setShowMobility] = useState(false);
   const [showStrength, setShowStrength] = useState(false);
@@ -142,22 +160,23 @@ export default function NewEvaluationScreen() {
         try {
           const evaluation = await evaluationService.getById(evaluationId);
           if (evaluation) {
-            const p = evaluation.protocols || {};
-            const c = evaluation.circumferences || {};
-            const sk = evaluation.skinfolds || {};
-            const an = evaluation.anamnesis || {};
+            const p  = evaluation.protocols        || {};
+            const c  = evaluation.circumferences   || {};
+            const sk = evaluation.skinfolds        || {};
+            const an = evaluation.anamnesis        || {};
+            const bd = evaluation.boneDiameters    || {};
             const pa = evaluation.posturalAssessment || {};
-            const mob = evaluation.mobilityTests || {};
-            const str = evaluation.strengthTests || {};
-            const car = evaluation.cardioTests || {};
+            const mob= evaluation.mobilityTests    || {};
+            const str= evaluation.strengthTests    || {};
+            const car= evaluation.cardioTests      || {};
 
             setForm({
               weight: String(evaluation.weight),
               anamnesis: {
-                injuryHistory: an.injuryHistory || '',
+                injuryHistory:    an.injuryHistory    || '',
                 healthConditions: an.healthConditions || '',
-                medications: an.medications || '',
-                activityLevel: an.activityLevel || '',
+                medications:      an.medications      || '',
+                activityLevel:    an.activityLevel    || '',
               },
               protocols: {
                 pollock3:      p.pollock3      != null ? String(p.pollock3)      : '',
@@ -170,33 +189,39 @@ export default function NewEvaluationScreen() {
                 usNavy:        p.usNavy        != null ? String(p.usNavy)        : '',
               },
               skinfolds: {
-                chest:        sk.chest        != null ? String(sk.chest)        : '',
-                abdomen:      sk.abdomen      != null ? String(sk.abdomen)      : '',
-                suprailiac:   sk.suprailiac   != null ? String(sk.suprailiac)   : '',
-                subscapular:  sk.subscapular  != null ? String(sk.subscapular)  : '',
-                triceps:      sk.triceps      != null ? String(sk.triceps)      : '',
-                midaxillary:  sk.midaxillary  != null ? String(sk.midaxillary)  : '',
-                thigh:        sk.thigh        != null ? String(sk.thigh)        : '',
-                biceps:       sk.biceps       != null ? String(sk.biceps)       : '',
-                medialCalf:   sk.medialCalf   != null ? String(sk.medialCalf)   : '',
+                chest:       sk.chest       != null ? String(sk.chest)       : '',
+                abdomen:     sk.abdomen     != null ? String(sk.abdomen)     : '',
+                suprailiac:  sk.suprailiac  != null ? String(sk.suprailiac)  : '',
+                subscapular: sk.subscapular != null ? String(sk.subscapular) : '',
+                triceps:     sk.triceps     != null ? String(sk.triceps)     : '',
+                midaxillary: sk.midaxillary != null ? String(sk.midaxillary) : '',
+                thigh:       sk.thigh       != null ? String(sk.thigh)       : '',
+                biceps:      sk.biceps      != null ? String(sk.biceps)      : '',
+                medialCalf:  sk.medialCalf  != null ? String(sk.medialCalf)  : '',
               },
               circumferences: {
-                neck:           c.neck           != null ? String(c.neck)           : '',
-                chest:          c.chest          != null ? String(c.chest)          : '',
-                waist:          c.waist          != null ? String(c.waist)          : '',
-                abdomen:        c.abdomen        != null ? String(c.abdomen)        : '',
-                hip:            c.hip            != null ? String(c.hip)            : '',
-                shoulder:       c.shoulder       != null ? String(c.shoulder)       : '',
-                rightForearm:   c.rightForearm   != null ? String(c.rightForearm)   : '',
-                leftForearm:    c.leftForearm    != null ? String(c.leftForearm)    : '',
-                rightArmRelaxed:c.rightArmRelaxed!= null ? String(c.rightArmRelaxed): '',
-                leftArmRelaxed: c.leftArmRelaxed != null ? String(c.leftArmRelaxed) : '',
-                rightArmFlexed: c.rightArmFlexed != null ? String(c.rightArmFlexed) : '',
-                leftArmFlexed:  c.leftArmFlexed  != null ? String(c.leftArmFlexed)  : '',
-                rightThigh:     c.rightThigh     != null ? String(c.rightThigh)     : '',
-                leftThigh:      c.leftThigh      != null ? String(c.leftThigh)      : '',
-                rightCalf:      c.rightCalf      != null ? String(c.rightCalf)      : '',
-                leftCalf:       c.leftCalf       != null ? String(c.leftCalf)       : '',
+                neck:            c.neck            != null ? String(c.neck)            : '',
+                chest:           c.chest           != null ? String(c.chest)           : '',
+                waist:           c.waist           != null ? String(c.waist)           : '',
+                abdomen:         c.abdomen         != null ? String(c.abdomen)         : '',
+                hip:             c.hip             != null ? String(c.hip)             : '',
+                shoulder:        c.shoulder        != null ? String(c.shoulder)        : '',
+                rightForearm:    c.rightForearm    != null ? String(c.rightForearm)    : '',
+                leftForearm:     c.leftForearm     != null ? String(c.leftForearm)     : '',
+                rightArmRelaxed: c.rightArmRelaxed != null ? String(c.rightArmRelaxed) : '',
+                leftArmRelaxed:  c.leftArmRelaxed  != null ? String(c.leftArmRelaxed)  : '',
+                rightArmFlexed:  c.rightArmFlexed  != null ? String(c.rightArmFlexed)  : '',
+                leftArmFlexed:   c.leftArmFlexed   != null ? String(c.leftArmFlexed)   : '',
+                rightThigh:      c.rightThigh      != null ? String(c.rightThigh)      : '',
+                leftThigh:       c.leftThigh       != null ? String(c.leftThigh)       : '',
+                rightCalf:       c.rightCalf       != null ? String(c.rightCalf)       : '',
+                leftCalf:        c.leftCalf        != null ? String(c.leftCalf)        : '',
+              },
+              boneDiameters: {
+                wrist: bd.wrist != null ? String(bd.wrist) : '',
+                elbow: bd.elbow != null ? String(bd.elbow) : '',
+                knee:  bd.knee  != null ? String(bd.knee)  : '',
+                ankle: bd.ankle != null ? String(bd.ankle) : '',
               },
               posturalAssessment: {
                 shoulderAsymmetry: pa.shoulderAsymmetry ?? false,
@@ -210,11 +235,11 @@ export default function NewEvaluationScreen() {
                 notes:             pa.notes             ?? '',
               },
               mobilityTests: {
-                sitAndReach:     mob.sitAndReach     != null ? String(mob.sitAndReach) : '',
-                shoulderMobility:mob.shoulderMobility ?? '',
-                hipMobility:     mob.hipMobility      ?? '',
-                ankleMobility:   mob.ankleMobility    ?? '',
-                notes:           mob.notes            ?? '',
+                sitAndReach:      mob.sitAndReach      != null ? String(mob.sitAndReach) : '',
+                shoulderMobility: mob.shoulderMobility ?? '',
+                hipMobility:      mob.hipMobility      ?? '',
+                ankleMobility:    mob.ankleMobility    ?? '',
+                notes:            mob.notes            ?? '',
               },
               strengthTests: {
                 rm1Squat:      str.rm1Squat      != null ? String(str.rm1Squat)      : '',
@@ -228,7 +253,7 @@ export default function NewEvaluationScreen() {
               cardioTests: {
                 restingHeartRate: car.restingHeartRate != null ? String(car.restingHeartRate) : '',
                 cooperTest:       car.cooperTest       != null ? String(car.cooperTest)       : '',
-                walk6MinTest:     car.walk6MinTest      != null ? String(car.walk6MinTest)     : '',
+                walk6MinTest:     car.walk6MinTest     != null ? String(car.walk6MinTest)     : '',
                 notes:            car.notes            ?? '',
               },
               notes: evaluation.notes || '',
@@ -237,10 +262,11 @@ export default function NewEvaluationScreen() {
             setPhotos(evaluation.photos || []);
 
             // Auto-expand sections with data
-            if (Object.values(an).some((v) => v)) setShowAnamnesis(true);
+            if (Object.values(an).some((v) => v))  setShowAnamnesis(true);
             if (Object.values(c).some((v) => v != null && v > 0)) setShowCircumferences(true);
             if (Object.values(sk).some((v) => v != null && v > 0)) setShowSkinfolds(true);
-            if (Object.values(pa).some((v) => v)) setShowPostural(true);
+            if (Object.values(bd).some((v) => v != null && v > 0)) setShowBoneDiameters(true);
+            if (Object.values(pa).some((v) => v))  setShowPostural(true);
             if (Object.values(mob).some((v) => v)) setShowMobility(true);
             if (Object.values(str).some((v) => v)) setShowStrength(true);
             if (Object.values(car).some((v) => v)) setShowCardio(true);
@@ -259,38 +285,30 @@ export default function NewEvaluationScreen() {
 
   const isValid = form.weight.length > 0;
 
-  const updateAnamnesis = (field: keyof AnamnesisForm, value: string) =>
-    setForm((prev) => ({ ...prev, anamnesis: { ...prev.anamnesis, [field]: value } }));
-
-  const updateProtocol = (field: keyof ProtocolsForm, value: string) =>
-    setForm((prev) => ({ ...prev, protocols: { ...prev.protocols, [field]: value } }));
-
-  const updateSkinfold = (field: keyof SkinfoldsForm, value: string) =>
-    setForm((prev) => ({ ...prev, skinfolds: { ...prev.skinfolds, [field]: value } }));
-
-  const updateCircumference = (field: keyof CircumferencesForm, value: string) =>
-    setForm((prev) => ({ ...prev, circumferences: { ...prev.circumferences, [field]: value } }));
-
-  const updatePostural = (field: keyof PosturalAssessmentForm, value: boolean | string) =>
-    setForm((prev) => ({ ...prev, posturalAssessment: { ...prev.posturalAssessment, [field]: value } }));
-
-  const updateMobility = (field: keyof MobilityTestsForm, value: string) =>
-    setForm((prev) => ({ ...prev, mobilityTests: { ...prev.mobilityTests, [field]: value } }));
-
-  const updateStrength = (field: keyof StrengthTestsForm, value: string) =>
-    setForm((prev) => ({ ...prev, strengthTests: { ...prev.strengthTests, [field]: value } }));
-
-  const updateCardio = (field: keyof CardioTestsForm, value: string) =>
-    setForm((prev) => ({ ...prev, cardioTests: { ...prev.cardioTests, [field]: value } }));
+  const updateAnamnesis    = (f: keyof AnamnesisForm, v: string) =>
+    setForm((prev) => ({ ...prev, anamnesis: { ...prev.anamnesis, [f]: v } }));
+  const updateProtocol     = (f: keyof ProtocolsForm, v: string) =>
+    setForm((prev) => ({ ...prev, protocols: { ...prev.protocols, [f]: v } }));
+  const updateSkinfold     = (f: keyof SkinfoldsForm, v: string) =>
+    setForm((prev) => ({ ...prev, skinfolds: { ...prev.skinfolds, [f]: v } }));
+  const updateCircumference= (f: keyof CircumferencesForm, v: string) =>
+    setForm((prev) => ({ ...prev, circumferences: { ...prev.circumferences, [f]: v } }));
+  const updateBone         = (f: keyof BoneDiametersForm, v: string) =>
+    setForm((prev) => ({ ...prev, boneDiameters: { ...prev.boneDiameters, [f]: v } }));
+  const updatePostural     = (f: keyof PosturalAssessmentForm, v: boolean | string) =>
+    setForm((prev) => ({ ...prev, posturalAssessment: { ...prev.posturalAssessment, [f]: v } }));
+  const updateMobility     = (f: keyof MobilityTestsForm, v: string) =>
+    setForm((prev) => ({ ...prev, mobilityTests: { ...prev.mobilityTests, [f]: v } }));
+  const updateStrength     = (f: keyof StrengthTestsForm, v: string) =>
+    setForm((prev) => ({ ...prev, strengthTests: { ...prev.strengthTests, [f]: v } }));
+  const updateCardio       = (f: keyof CardioTestsForm, v: string) =>
+    setForm((prev) => ({ ...prev, cardioTests: { ...prev.cardioTests, [f]: v } }));
 
   // ─── Photos ──────────────────────────────────────────────────────────────────
 
   const addPhotoFromGallery = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsEditing: true,
-      aspect: [3, 4],
-      quality: 0.8,
+      mediaTypes: ['images'], allowsEditing: true, aspect: [3, 4], quality: 0.8,
     });
     if (!result.canceled) setPhotos((prev) => [...prev, result.assets[0].uri]);
   };
@@ -302,16 +320,14 @@ export default function NewEvaluationScreen() {
       return;
     }
     const result = await ImagePicker.launchCameraAsync({
-      allowsEditing: true,
-      aspect: [3, 4],
-      quality: 0.8,
+      allowsEditing: true, aspect: [3, 4], quality: 0.8,
     });
     if (!result.canceled) setPhotos((prev) => [...prev, result.assets[0].uri]);
   };
 
   const showAddPhotoOptions = () => {
     Alert.alert(t.evaluation.addPhoto, t.evaluation.choosePhotoSource, [
-      { text: t.evaluation.camera, onPress: addPhotoFromCamera },
+      { text: t.evaluation.camera,  onPress: addPhotoFromCamera },
       { text: t.evaluation.gallery, onPress: addPhotoFromGallery },
       { text: t.common.cancel, style: 'cancel' },
     ]);
@@ -327,9 +343,14 @@ export default function NewEvaluationScreen() {
     setLoading(true);
     try {
       if (isEditing && evaluationId) {
-        await evaluationService.update(evaluationId, clientId, parseFloat(clientHeight || '0'), form, photos);
+        await evaluationService.update(
+          evaluationId, clientId, parseFloat(clientHeight || '0'), form, photos
+        );
       } else {
-        await evaluationService.create(user.uid, clientId, parseFloat(clientHeight || '0'), form, photos.length > 0 ? photos : undefined);
+        await evaluationService.create(
+          user.uid, clientId, parseFloat(clientHeight || '0'), form,
+          photos.length > 0 ? photos : undefined
+        );
       }
       router.back();
     } catch (err) {
@@ -342,7 +363,9 @@ export default function NewEvaluationScreen() {
 
   // ─── Sub-components ──────────────────────────────────────────────────────────
 
-  const SectionHeader = ({ title, isOpen, onToggle }: { title: string; isOpen: boolean; onToggle: () => void }) => (
+  const SectionHeader = ({
+    title, isOpen, onToggle,
+  }: { title: string; isOpen: boolean; onToggle: () => void }) => (
     <TouchableOpacity
       onPress={onToggle}
       activeOpacity={0.7}
@@ -354,14 +377,8 @@ export default function NewEvaluationScreen() {
   );
 
   const CheckRow = ({
-    label,
-    value,
-    onToggle,
-  }: {
-    label: string;
-    value: boolean;
-    onToggle: (v: boolean) => void;
-  }) => (
+    label, value, onToggle,
+  }: { label: string; value: boolean; onToggle: (v: boolean) => void }) => (
     <View style={[styles.checkRow, { borderBottomColor: colors.border }]}>
       <Text style={[styles.checkLabel, { color: colors.text }]}>{label}</Text>
       <Switch
@@ -399,11 +416,16 @@ export default function NewEvaluationScreen() {
     </View>
   );
 
-  // ─── Loading guard ────────────────────────────────────────────────────────────
+  // ─── Gender label helper ──────────────────────────────────────────────────────
+  const genderLabel = clientGender === 'male'
+    ? t.client.male
+    : clientGender === 'female'
+      ? t.client.female
+      : clientGender === 'other'
+        ? t.client.other
+        : '';
 
   if (initialLoading) return <Loading message={t.common.loading} />;
-
-  // ─── Render ──────────────────────────────────────────────────────────────────
 
   return (
     <KeyboardAvoidingView
@@ -426,9 +448,47 @@ export default function NewEvaluationScreen() {
           <View style={{ width: 24 }} />
         </View>
 
-        {/* ═══════════════════════════════════════════ */}
-        {/* 1. WEIGHT (always visible) */}
-        {/* ═══════════════════════════════════════════ */}
+        {/* Client info pill row (read-only) */}
+        {(clientName || clientAge || clientGender) && (
+          <Card style={styles.clientInfoCard}>
+            <View style={styles.clientInfoRow}>
+              {clientName ? (
+                <View style={styles.clientInfoItem}>
+                  <Ionicons name="person" size={14} color={colors.primary} />
+                  <Text style={[styles.clientInfoText, { color: colors.text }]} numberOfLines={1}>
+                    {clientName}
+                  </Text>
+                </View>
+              ) : null}
+              {clientAge ? (
+                <View style={styles.clientInfoItem}>
+                  <Ionicons name="calendar-outline" size={14} color={colors.primary} />
+                  <Text style={[styles.clientInfoText, { color: colors.text }]}>
+                    {clientAge} {t.common.years}
+                  </Text>
+                </View>
+              ) : null}
+              {clientHeight ? (
+                <View style={styles.clientInfoItem}>
+                  <Ionicons name="resize" size={14} color={colors.primary} />
+                  <Text style={[styles.clientInfoText, { color: colors.text }]}>
+                    {clientHeight} m
+                  </Text>
+                </View>
+              ) : null}
+              {genderLabel ? (
+                <View style={styles.clientInfoItem}>
+                  <Ionicons name="male-female-outline" size={14} color={colors.primary} />
+                  <Text style={[styles.clientInfoText, { color: colors.text }]}>
+                    {genderLabel}
+                  </Text>
+                </View>
+              ) : null}
+            </View>
+          </Card>
+        )}
+
+        {/* ═══ WEIGHT (always visible) ═══════════════════════ */}
         <Input
           label={t.evaluation.weightKg}
           placeholder={t.evaluation.weightPlaceholder}
@@ -446,15 +506,16 @@ export default function NewEvaluationScreen() {
                 {t.evaluation.calculatedBmi}
               </Text>
               <Text style={[styles.bmiValue, { color: colors.text }]}>
-                {(parseFloat(form.weight) / (parseFloat(clientHeight) * parseFloat(clientHeight))).toFixed(1)}
+                {(
+                  parseFloat(form.weight) /
+                  (parseFloat(clientHeight) * parseFloat(clientHeight))
+                ).toFixed(1)}
               </Text>
             </View>
           </Card>
         )}
 
-        {/* ═══════════════════════════════════════════ */}
-        {/* 2. ANAMNESE */}
-        {/* ═══════════════════════════════════════════ */}
+        {/* ═══ 1. ANAMNESE ════════════════════════════════════ */}
         <SectionHeader title={t.evaluation.anamnesis} isOpen={showAnamnesis} onToggle={() => setShowAnamnesis(!showAnamnesis)} />
         {showAnamnesis && (
           <View style={styles.sectionContent}>
@@ -463,27 +524,21 @@ export default function NewEvaluationScreen() {
               placeholder={t.evaluation.injuryHistoryPlaceholder}
               value={form.anamnesis.injuryHistory}
               onChangeText={(v) => updateAnamnesis('injuryHistory', v)}
-              multiline
-              numberOfLines={3}
-              style={styles.multilineInput}
+              multiline numberOfLines={3} style={styles.multilineInput}
             />
             <Input
               label={t.evaluation.healthConditions}
               placeholder={t.evaluation.healthConditionsPlaceholder}
               value={form.anamnesis.healthConditions}
               onChangeText={(v) => updateAnamnesis('healthConditions', v)}
-              multiline
-              numberOfLines={3}
-              style={styles.multilineInput}
+              multiline numberOfLines={3} style={styles.multilineInput}
             />
             <Input
               label={t.evaluation.medications}
               placeholder={t.evaluation.medicationsPlaceholder}
               value={form.anamnesis.medications}
               onChangeText={(v) => updateAnamnesis('medications', v)}
-              multiline
-              numberOfLines={2}
-              style={styles.multilineInput}
+              multiline numberOfLines={2} style={styles.multilineInput}
             />
             <Text style={[styles.subLabel, { color: colors.textSecondary }]}>
               {t.evaluation.activityLevel}
@@ -492,9 +547,7 @@ export default function NewEvaluationScreen() {
           </View>
         )}
 
-        {/* ═══════════════════════════════════════════ */}
-        {/* 3. COMPOSIÇÃO CORPORAL / PROTOCOLOS */}
-        {/* ═══════════════════════════════════════════ */}
+        {/* ═══ 2. COMPOSIÇÃO CORPORAL / PROTOCOLOS ═══════════ */}
         <SectionHeader title={t.evaluation.protocols} isOpen={showProtocols} onToggle={() => setShowProtocols(!showProtocols)} />
         {showProtocols && (
           <View style={styles.sectionContent}>
@@ -503,93 +556,102 @@ export default function NewEvaluationScreen() {
               <Input label={t.evaluation.pollock7} placeholder={t.evaluation.pollock7Placeholder} value={form.protocols.pollock7} onChangeText={(v) => updateProtocol('pollock7', v)} keyboardType="decimal-pad" containerStyle={styles.halfInput} />
             </View>
             <View style={styles.row}>
-              <Input label={t.evaluation.leanMass} placeholder={t.evaluation.leanMassPlaceholder} value={form.protocols.leanMass} onChangeText={(v) => updateProtocol('leanMass', v)} keyboardType="decimal-pad" containerStyle={styles.halfInput} />
-              <Input label={t.evaluation.fatMass} placeholder={t.evaluation.fatMassPlaceholder} value={form.protocols.fatMass} onChangeText={(v) => updateProtocol('fatMass', v)} keyboardType="decimal-pad" containerStyle={styles.halfInput} />
+              <Input label={t.evaluation.leanMass}    placeholder={t.evaluation.leanMassPlaceholder}   value={form.protocols.leanMass}    onChangeText={(v) => updateProtocol('leanMass', v)}    keyboardType="decimal-pad" containerStyle={styles.halfInput} />
+              <Input label={t.evaluation.fatMass}     placeholder={t.evaluation.fatMassPlaceholder}    value={form.protocols.fatMass}     onChangeText={(v) => updateProtocol('fatMass', v)}     keyboardType="decimal-pad" containerStyle={styles.halfInput} />
             </View>
             <View style={styles.row}>
               <Input label={t.evaluation.idealWeight} placeholder={t.evaluation.idealWeightPlaceholder} value={form.protocols.idealWeight} onChangeText={(v) => updateProtocol('idealWeight', v)} keyboardType="decimal-pad" containerStyle={styles.halfInput} />
-              <Input label={t.evaluation.maxHeartRate} placeholder={t.evaluation.maxHeartRatePlaceholder} value={form.protocols.maxHeartRate} onChangeText={(v) => updateProtocol('maxHeartRate', v)} keyboardType="decimal-pad" containerStyle={styles.halfInput} />
+              <Input label={t.evaluation.maxHeartRate}placeholder={t.evaluation.maxHeartRatePlaceholder}value={form.protocols.maxHeartRate}onChangeText={(v) => updateProtocol('maxHeartRate', v)} keyboardType="decimal-pad" containerStyle={styles.halfInput} />
             </View>
             <View style={styles.row}>
               <Input label={t.evaluation.waistHipRatio} placeholder={t.evaluation.waistHipRatioPlaceholder} value={form.protocols.waistHipRatio} onChangeText={(v) => updateProtocol('waistHipRatio', v)} keyboardType="decimal-pad" containerStyle={styles.halfInput} />
-              <Input label={t.evaluation.usNavy} placeholder={t.evaluation.usNavyPlaceholder} value={form.protocols.usNavy} onChangeText={(v) => updateProtocol('usNavy', v)} keyboardType="decimal-pad" containerStyle={styles.halfInput} />
+              <Input label={t.evaluation.usNavy}         placeholder={t.evaluation.usNavyPlaceholder}        value={form.protocols.usNavy}        onChangeText={(v) => updateProtocol('usNavy', v)}        keyboardType="decimal-pad" containerStyle={styles.halfInput} />
             </View>
           </View>
         )}
 
-        {/* ═══════════════════════════════════════════ */}
-        {/* 4. DOBRAS CUTÂNEAS */}
-        {/* ═══════════════════════════════════════════ */}
+        {/* ═══ 3. DOBRAS CUTÂNEAS ═════════════════════════════ */}
         <SectionHeader title={t.evaluation.skinfolds} isOpen={showSkinfolds} onToggle={() => setShowSkinfolds(!showSkinfolds)} />
         {showSkinfolds && (
           <View style={styles.sectionContent}>
             <View style={styles.row}>
-              <Input label={t.evaluation.skinfoldChest} placeholder={t.evaluation.mmPlaceholder} value={form.skinfolds.chest} onChangeText={(v) => updateSkinfold('chest', v)} keyboardType="decimal-pad" containerStyle={styles.halfInput} />
-              <Input label={t.evaluation.skinfoldAbdomen} placeholder={t.evaluation.mmPlaceholder} value={form.skinfolds.abdomen} onChangeText={(v) => updateSkinfold('abdomen', v)} keyboardType="decimal-pad" containerStyle={styles.halfInput} />
+              <Input label={t.evaluation.skinfoldChest}      placeholder={t.evaluation.mmPlaceholder} value={form.skinfolds.chest}       onChangeText={(v) => updateSkinfold('chest', v)}       keyboardType="decimal-pad" containerStyle={styles.halfInput} />
+              <Input label={t.evaluation.skinfoldAbdomen}    placeholder={t.evaluation.mmPlaceholder} value={form.skinfolds.abdomen}     onChangeText={(v) => updateSkinfold('abdomen', v)}     keyboardType="decimal-pad" containerStyle={styles.halfInput} />
             </View>
             <View style={styles.row}>
-              <Input label={t.evaluation.skinfoldSuprailiac} placeholder={t.evaluation.mmPlaceholder} value={form.skinfolds.suprailiac} onChangeText={(v) => updateSkinfold('suprailiac', v)} keyboardType="decimal-pad" containerStyle={styles.halfInput} />
-              <Input label={t.evaluation.skinfoldSubscapular} placeholder={t.evaluation.mmPlaceholder} value={form.skinfolds.subscapular} onChangeText={(v) => updateSkinfold('subscapular', v)} keyboardType="decimal-pad" containerStyle={styles.halfInput} />
+              <Input label={t.evaluation.skinfoldSuprailiac} placeholder={t.evaluation.mmPlaceholder} value={form.skinfolds.suprailiac}  onChangeText={(v) => updateSkinfold('suprailiac', v)}  keyboardType="decimal-pad" containerStyle={styles.halfInput} />
+              <Input label={t.evaluation.skinfoldSubscapular}placeholder={t.evaluation.mmPlaceholder} value={form.skinfolds.subscapular} onChangeText={(v) => updateSkinfold('subscapular', v)} keyboardType="decimal-pad" containerStyle={styles.halfInput} />
             </View>
             <View style={styles.row}>
-              <Input label={t.evaluation.skinfoldTriceps} placeholder={t.evaluation.mmPlaceholder} value={form.skinfolds.triceps} onChangeText={(v) => updateSkinfold('triceps', v)} keyboardType="decimal-pad" containerStyle={styles.halfInput} />
-              <Input label={t.evaluation.skinfoldMidaxillary} placeholder={t.evaluation.mmPlaceholder} value={form.skinfolds.midaxillary} onChangeText={(v) => updateSkinfold('midaxillary', v)} keyboardType="decimal-pad" containerStyle={styles.halfInput} />
+              <Input label={t.evaluation.skinfoldTriceps}    placeholder={t.evaluation.mmPlaceholder} value={form.skinfolds.triceps}     onChangeText={(v) => updateSkinfold('triceps', v)}     keyboardType="decimal-pad" containerStyle={styles.halfInput} />
+              <Input label={t.evaluation.skinfoldMidaxillary}placeholder={t.evaluation.mmPlaceholder} value={form.skinfolds.midaxillary} onChangeText={(v) => updateSkinfold('midaxillary', v)} keyboardType="decimal-pad" containerStyle={styles.halfInput} />
             </View>
             <View style={styles.row}>
-              <Input label={t.evaluation.skinfoldThigh} placeholder={t.evaluation.mmPlaceholder} value={form.skinfolds.thigh} onChangeText={(v) => updateSkinfold('thigh', v)} keyboardType="decimal-pad" containerStyle={styles.halfInput} />
-              <Input label={t.evaluation.skinfoldBiceps} placeholder={t.evaluation.mmPlaceholder} value={form.skinfolds.biceps} onChangeText={(v) => updateSkinfold('biceps', v)} keyboardType="decimal-pad" containerStyle={styles.halfInput} />
+              <Input label={t.evaluation.skinfoldThigh}      placeholder={t.evaluation.mmPlaceholder} value={form.skinfolds.thigh}       onChangeText={(v) => updateSkinfold('thigh', v)}       keyboardType="decimal-pad" containerStyle={styles.halfInput} />
+              <Input label={t.evaluation.skinfoldBiceps}     placeholder={t.evaluation.mmPlaceholder} value={form.skinfolds.biceps}      onChangeText={(v) => updateSkinfold('biceps', v)}      keyboardType="decimal-pad" containerStyle={styles.halfInput} />
             </View>
             <View style={styles.row}>
-              <Input label={t.evaluation.skinfoldMedialCalf} placeholder={t.evaluation.mmPlaceholder} value={form.skinfolds.medialCalf} onChangeText={(v) => updateSkinfold('medialCalf', v)} keyboardType="decimal-pad" containerStyle={styles.halfInput} />
+              <Input label={t.evaluation.skinfoldMedialCalf} placeholder={t.evaluation.mmPlaceholder} value={form.skinfolds.medialCalf}  onChangeText={(v) => updateSkinfold('medialCalf', v)}  keyboardType="decimal-pad" containerStyle={styles.halfInput} />
               <View style={styles.halfInput} />
             </View>
           </View>
         )}
 
-        {/* ═══════════════════════════════════════════ */}
-        {/* 5. PERIMETRIA */}
-        {/* ═══════════════════════════════════════════ */}
+        {/* ═══ 4. PERIMETRIA ══════════════════════════════════ */}
         <SectionHeader title={t.evaluation.circumferences} isOpen={showCircumferences} onToggle={() => setShowCircumferences(!showCircumferences)} />
         {showCircumferences && (
           <View style={styles.sectionContent}>
             <View style={styles.row}>
-              <Input label={t.evaluation.neck} placeholder={t.evaluation.cmPlaceholder} value={form.circumferences.neck} onChangeText={(v) => updateCircumference('neck', v)} keyboardType="decimal-pad" containerStyle={styles.halfInput} />
-              <Input label={t.evaluation.chest} placeholder={t.evaluation.cmPlaceholder} value={form.circumferences.chest} onChangeText={(v) => updateCircumference('chest', v)} keyboardType="decimal-pad" containerStyle={styles.halfInput} />
+              <Input label={t.evaluation.neck}    placeholder={t.evaluation.cmPlaceholder} value={form.circumferences.neck}    onChangeText={(v) => updateCircumference('neck', v)}    keyboardType="decimal-pad" containerStyle={styles.halfInput} />
+              <Input label={t.evaluation.chest}   placeholder={t.evaluation.cmPlaceholder} value={form.circumferences.chest}   onChangeText={(v) => updateCircumference('chest', v)}   keyboardType="decimal-pad" containerStyle={styles.halfInput} />
             </View>
             <View style={styles.row}>
-              <Input label={t.evaluation.waist} placeholder={t.evaluation.cmPlaceholder} value={form.circumferences.waist} onChangeText={(v) => updateCircumference('waist', v)} keyboardType="decimal-pad" containerStyle={styles.halfInput} />
+              <Input label={t.evaluation.waist}   placeholder={t.evaluation.cmPlaceholder} value={form.circumferences.waist}   onChangeText={(v) => updateCircumference('waist', v)}   keyboardType="decimal-pad" containerStyle={styles.halfInput} />
               <Input label={t.evaluation.abdomen} placeholder={t.evaluation.cmPlaceholder} value={form.circumferences.abdomen} onChangeText={(v) => updateCircumference('abdomen', v)} keyboardType="decimal-pad" containerStyle={styles.halfInput} />
             </View>
             <View style={styles.row}>
-              <Input label={t.evaluation.hip} placeholder={t.evaluation.cmPlaceholder} value={form.circumferences.hip} onChangeText={(v) => updateCircumference('hip', v)} keyboardType="decimal-pad" containerStyle={styles.halfInput} />
-              <Input label={t.evaluation.shoulder} placeholder={t.evaluation.cmPlaceholder} value={form.circumferences.shoulder} onChangeText={(v) => updateCircumference('shoulder', v)} keyboardType="decimal-pad" containerStyle={styles.halfInput} />
+              <Input label={t.evaluation.hip}     placeholder={t.evaluation.cmPlaceholder} value={form.circumferences.hip}     onChangeText={(v) => updateCircumference('hip', v)}     keyboardType="decimal-pad" containerStyle={styles.halfInput} />
+              <Input label={t.evaluation.shoulder}placeholder={t.evaluation.cmPlaceholder} value={form.circumferences.shoulder}onChangeText={(v) => updateCircumference('shoulder', v)} keyboardType="decimal-pad" containerStyle={styles.halfInput} />
             </View>
             <View style={styles.row}>
               <Input label={t.evaluation.rightForearm} placeholder={t.evaluation.cmPlaceholder} value={form.circumferences.rightForearm} onChangeText={(v) => updateCircumference('rightForearm', v)} keyboardType="decimal-pad" containerStyle={styles.halfInput} />
-              <Input label={t.evaluation.leftForearm} placeholder={t.evaluation.cmPlaceholder} value={form.circumferences.leftForearm} onChangeText={(v) => updateCircumference('leftForearm', v)} keyboardType="decimal-pad" containerStyle={styles.halfInput} />
+              <Input label={t.evaluation.leftForearm}  placeholder={t.evaluation.cmPlaceholder} value={form.circumferences.leftForearm}  onChangeText={(v) => updateCircumference('leftForearm', v)}  keyboardType="decimal-pad" containerStyle={styles.halfInput} />
             </View>
             <View style={styles.row}>
               <Input label={t.evaluation.rightArmRelaxed} placeholder={t.evaluation.cmPlaceholder} value={form.circumferences.rightArmRelaxed} onChangeText={(v) => updateCircumference('rightArmRelaxed', v)} keyboardType="decimal-pad" containerStyle={styles.halfInput} />
-              <Input label={t.evaluation.leftArmRelaxed} placeholder={t.evaluation.cmPlaceholder} value={form.circumferences.leftArmRelaxed} onChangeText={(v) => updateCircumference('leftArmRelaxed', v)} keyboardType="decimal-pad" containerStyle={styles.halfInput} />
+              <Input label={t.evaluation.leftArmRelaxed}  placeholder={t.evaluation.cmPlaceholder} value={form.circumferences.leftArmRelaxed}  onChangeText={(v) => updateCircumference('leftArmRelaxed', v)}  keyboardType="decimal-pad" containerStyle={styles.halfInput} />
             </View>
             <View style={styles.row}>
               <Input label={t.evaluation.rightArmFlexed} placeholder={t.evaluation.cmPlaceholder} value={form.circumferences.rightArmFlexed} onChangeText={(v) => updateCircumference('rightArmFlexed', v)} keyboardType="decimal-pad" containerStyle={styles.halfInput} />
-              <Input label={t.evaluation.leftArmFlexed} placeholder={t.evaluation.cmPlaceholder} value={form.circumferences.leftArmFlexed} onChangeText={(v) => updateCircumference('leftArmFlexed', v)} keyboardType="decimal-pad" containerStyle={styles.halfInput} />
+              <Input label={t.evaluation.leftArmFlexed}  placeholder={t.evaluation.cmPlaceholder} value={form.circumferences.leftArmFlexed}  onChangeText={(v) => updateCircumference('leftArmFlexed', v)}  keyboardType="decimal-pad" containerStyle={styles.halfInput} />
             </View>
             <View style={styles.row}>
               <Input label={t.evaluation.rightThigh} placeholder={t.evaluation.cmPlaceholder} value={form.circumferences.rightThigh} onChangeText={(v) => updateCircumference('rightThigh', v)} keyboardType="decimal-pad" containerStyle={styles.halfInput} />
-              <Input label={t.evaluation.leftThigh} placeholder={t.evaluation.cmPlaceholder} value={form.circumferences.leftThigh} onChangeText={(v) => updateCircumference('leftThigh', v)} keyboardType="decimal-pad" containerStyle={styles.halfInput} />
+              <Input label={t.evaluation.leftThigh}  placeholder={t.evaluation.cmPlaceholder} value={form.circumferences.leftThigh}  onChangeText={(v) => updateCircumference('leftThigh', v)}  keyboardType="decimal-pad" containerStyle={styles.halfInput} />
             </View>
             <View style={styles.row}>
               <Input label={t.evaluation.rightCalf} placeholder={t.evaluation.cmPlaceholder} value={form.circumferences.rightCalf} onChangeText={(v) => updateCircumference('rightCalf', v)} keyboardType="decimal-pad" containerStyle={styles.halfInput} />
-              <Input label={t.evaluation.leftCalf} placeholder={t.evaluation.cmPlaceholder} value={form.circumferences.leftCalf} onChangeText={(v) => updateCircumference('leftCalf', v)} keyboardType="decimal-pad" containerStyle={styles.halfInput} />
+              <Input label={t.evaluation.leftCalf}  placeholder={t.evaluation.cmPlaceholder} value={form.circumferences.leftCalf}  onChangeText={(v) => updateCircumference('leftCalf', v)}  keyboardType="decimal-pad" containerStyle={styles.halfInput} />
             </View>
           </View>
         )}
 
-        {/* ═══════════════════════════════════════════ */}
-        {/* 6. AVALIAÇÃO POSTURAL */}
-        {/* ═══════════════════════════════════════════ */}
+        {/* ═══ 5. DIÂMETROS ÓSSEOS ════════════════════════════ */}
+        <SectionHeader title={t.evaluation.boneDiameters} isOpen={showBoneDiameters} onToggle={() => setShowBoneDiameters(!showBoneDiameters)} />
+        {showBoneDiameters && (
+          <View style={styles.sectionContent}>
+            <View style={styles.row}>
+              <Input label={t.evaluation.wrist} placeholder={t.evaluation.wristPlaceholder} value={form.boneDiameters.wrist} onChangeText={(v) => updateBone('wrist', v)} keyboardType="decimal-pad" containerStyle={styles.halfInput} />
+              <Input label={t.evaluation.elbow} placeholder={t.evaluation.elbowPlaceholder} value={form.boneDiameters.elbow} onChangeText={(v) => updateBone('elbow', v)} keyboardType="decimal-pad" containerStyle={styles.halfInput} />
+            </View>
+            <View style={styles.row}>
+              <Input label={t.evaluation.knee}  placeholder={t.evaluation.kneePlaceholder}      value={form.boneDiameters.knee}  onChangeText={(v) => updateBone('knee', v)}  keyboardType="decimal-pad" containerStyle={styles.halfInput} />
+              <Input label={t.evaluation.ankle} placeholder={t.evaluation.ankleDiamPlaceholder} value={form.boneDiameters.ankle} onChangeText={(v) => updateBone('ankle', v)} keyboardType="decimal-pad" containerStyle={styles.halfInput} />
+            </View>
+          </View>
+        )}
+
+        {/* ═══ 6. AVALIAÇÃO POSTURAL ══════════════════════════ */}
         <SectionHeader title={t.evaluation.posturalAssessment} isOpen={showPostural} onToggle={() => setShowPostural(!showPostural)} />
         {showPostural && (
           <View style={styles.sectionContent}>
@@ -608,93 +670,59 @@ export default function NewEvaluationScreen() {
               placeholder={t.evaluation.posturalNotesPlaceholder}
               value={form.posturalAssessment.notes}
               onChangeText={(v) => updatePostural('notes', v)}
-              multiline
-              numberOfLines={3}
-              style={styles.multilineInput}
+              multiline numberOfLines={3} style={styles.multilineInput}
             />
           </View>
         )}
 
-        {/* ═══════════════════════════════════════════ */}
-        {/* 7. MOBILIDADE E FLEXIBILIDADE */}
-        {/* ═══════════════════════════════════════════ */}
+        {/* ═══ 7. MOBILIDADE E FLEXIBILIDADE ══════════════════ */}
         <SectionHeader title={t.evaluation.mobilityTests} isOpen={showMobility} onToggle={() => setShowMobility(!showMobility)} />
         {showMobility && (
           <View style={styles.sectionContent}>
             <Input label={t.evaluation.sitAndReach} placeholder={t.evaluation.sitAndReachPlaceholder} value={form.mobilityTests.sitAndReach} onChangeText={(v) => updateMobility('sitAndReach', v)} keyboardType="decimal-pad" />
             <View style={styles.row}>
               <Input label={t.evaluation.shoulderMobility} placeholder={t.evaluation.shoulderMobilityPlaceholder} value={form.mobilityTests.shoulderMobility} onChangeText={(v) => updateMobility('shoulderMobility', v)} containerStyle={styles.halfInput} />
-              <Input label={t.evaluation.hipMobility} placeholder={t.evaluation.hipMobilityPlaceholder} value={form.mobilityTests.hipMobility} onChangeText={(v) => updateMobility('hipMobility', v)} containerStyle={styles.halfInput} />
+              <Input label={t.evaluation.hipMobility}      placeholder={t.evaluation.hipMobilityPlaceholder}      value={form.mobilityTests.hipMobility}      onChangeText={(v) => updateMobility('hipMobility', v)}      containerStyle={styles.halfInput} />
             </View>
             <Input label={t.evaluation.ankleMobility} placeholder={t.evaluation.ankleMobilityPlaceholder} value={form.mobilityTests.ankleMobility} onChangeText={(v) => updateMobility('ankleMobility', v)} />
-            <Input
-              label={t.evaluation.mobilityNotes}
-              placeholder={t.evaluation.mobilityNotesPlaceholder}
-              value={form.mobilityTests.notes}
-              onChangeText={(v) => updateMobility('notes', v)}
-              multiline
-              numberOfLines={2}
-              style={styles.multilineInput}
-            />
+            <Input label={t.evaluation.mobilityNotes} placeholder={t.evaluation.mobilityNotesPlaceholder} value={form.mobilityTests.notes} onChangeText={(v) => updateMobility('notes', v)} multiline numberOfLines={2} style={styles.multilineInput} />
           </View>
         )}
 
-        {/* ═══════════════════════════════════════════ */}
-        {/* 8. TESTES DE FORÇA */}
-        {/* ═══════════════════════════════════════════ */}
+        {/* ═══ 8. TESTES DE FORÇA ══════════════════════════════ */}
         <SectionHeader title={t.evaluation.strengthTests} isOpen={showStrength} onToggle={() => setShowStrength(!showStrength)} />
         {showStrength && (
           <View style={styles.sectionContent}>
             <View style={styles.row}>
-              <Input label={t.evaluation.rm1Squat}      placeholder={t.evaluation.kgPlaceholder}   value={form.strengthTests.rm1Squat}      onChangeText={(v) => updateStrength('rm1Squat', v)}      keyboardType="decimal-pad" containerStyle={styles.halfInput} />
-              <Input label={t.evaluation.rm1BenchPress} placeholder={t.evaluation.kgPlaceholder}   value={form.strengthTests.rm1BenchPress} onChangeText={(v) => updateStrength('rm1BenchPress', v)} keyboardType="decimal-pad" containerStyle={styles.halfInput} />
+              <Input label={t.evaluation.rm1Squat}      placeholder={t.evaluation.kgPlaceholder}      value={form.strengthTests.rm1Squat}      onChangeText={(v) => updateStrength('rm1Squat', v)}      keyboardType="decimal-pad" containerStyle={styles.halfInput} />
+              <Input label={t.evaluation.rm1BenchPress} placeholder={t.evaluation.kgPlaceholder}      value={form.strengthTests.rm1BenchPress} onChangeText={(v) => updateStrength('rm1BenchPress', v)} keyboardType="decimal-pad" containerStyle={styles.halfInput} />
             </View>
             <View style={styles.row}>
-              <Input label={t.evaluation.rm1Deadlift}   placeholder={t.evaluation.kgPlaceholder}   value={form.strengthTests.rm1Deadlift}   onChangeText={(v) => updateStrength('rm1Deadlift', v)}   keyboardType="decimal-pad" containerStyle={styles.halfInput} />
-              <Input label={t.evaluation.pushUps}       placeholder={t.evaluation.repsPlaceholder} value={form.strengthTests.pushUps}       onChangeText={(v) => updateStrength('pushUps', v)}       keyboardType="number-pad"  containerStyle={styles.halfInput} />
+              <Input label={t.evaluation.rm1Deadlift}   placeholder={t.evaluation.kgPlaceholder}      value={form.strengthTests.rm1Deadlift}   onChangeText={(v) => updateStrength('rm1Deadlift', v)}   keyboardType="decimal-pad" containerStyle={styles.halfInput} />
+              <Input label={t.evaluation.pushUps}       placeholder={t.evaluation.repsPlaceholder}    value={form.strengthTests.pushUps}       onChangeText={(v) => updateStrength('pushUps', v)}       keyboardType="number-pad"  containerStyle={styles.halfInput} />
             </View>
             <View style={styles.row}>
-              <Input label={t.evaluation.sitUps}        placeholder={t.evaluation.repsPlaceholder} value={form.strengthTests.sitUps}        onChangeText={(v) => updateStrength('sitUps', v)}        keyboardType="number-pad"  containerStyle={styles.halfInput} />
-              <Input label={t.evaluation.plankSeconds}  placeholder={t.evaluation.secondsPlaceholder} value={form.strengthTests.plankSeconds}  onChangeText={(v) => updateStrength('plankSeconds', v)}  keyboardType="number-pad"  containerStyle={styles.halfInput} />
+              <Input label={t.evaluation.sitUps}       placeholder={t.evaluation.repsPlaceholder}    value={form.strengthTests.sitUps}       onChangeText={(v) => updateStrength('sitUps', v)}       keyboardType="number-pad"  containerStyle={styles.halfInput} />
+              <Input label={t.evaluation.plankSeconds} placeholder={t.evaluation.secondsPlaceholder} value={form.strengthTests.plankSeconds} onChangeText={(v) => updateStrength('plankSeconds', v)} keyboardType="number-pad"  containerStyle={styles.halfInput} />
             </View>
-            <Input
-              label={t.evaluation.strengthNotes}
-              placeholder={t.evaluation.strengthNotesPlaceholder}
-              value={form.strengthTests.notes}
-              onChangeText={(v) => updateStrength('notes', v)}
-              multiline
-              numberOfLines={2}
-              style={styles.multilineInput}
-            />
+            <Input label={t.evaluation.strengthNotes} placeholder={t.evaluation.strengthNotesPlaceholder} value={form.strengthTests.notes} onChangeText={(v) => updateStrength('notes', v)} multiline numberOfLines={2} style={styles.multilineInput} />
           </View>
         )}
 
-        {/* ═══════════════════════════════════════════ */}
-        {/* 9. AVALIAÇÃO CARDIORRESPIRATÓRIA */}
-        {/* ═══════════════════════════════════════════ */}
+        {/* ═══ 9. CARDIORRESPIRATÓRIO ══════════════════════════ */}
         <SectionHeader title={t.evaluation.cardioTests} isOpen={showCardio} onToggle={() => setShowCardio(!showCardio)} />
         {showCardio && (
           <View style={styles.sectionContent}>
-            <Input label={t.evaluation.restingHeartRate} placeholder={t.evaluation.bpmPlaceholder}    value={form.cardioTests.restingHeartRate} onChangeText={(v) => updateCardio('restingHeartRate', v)} keyboardType="number-pad" />
+            <Input label={t.evaluation.restingHeartRate} placeholder={t.evaluation.bpmPlaceholder} value={form.cardioTests.restingHeartRate} onChangeText={(v) => updateCardio('restingHeartRate', v)} keyboardType="number-pad" />
             <View style={styles.row}>
               <Input label={t.evaluation.cooperTest}   placeholder={t.evaluation.metersPlaceholder} value={form.cardioTests.cooperTest}   onChangeText={(v) => updateCardio('cooperTest', v)}   keyboardType="number-pad" containerStyle={styles.halfInput} />
               <Input label={t.evaluation.walk6MinTest} placeholder={t.evaluation.metersPlaceholder} value={form.cardioTests.walk6MinTest} onChangeText={(v) => updateCardio('walk6MinTest', v)} keyboardType="number-pad" containerStyle={styles.halfInput} />
             </View>
-            <Input
-              label={t.evaluation.cardioNotes}
-              placeholder={t.evaluation.cardioNotesPlaceholder}
-              value={form.cardioTests.notes}
-              onChangeText={(v) => updateCardio('notes', v)}
-              multiline
-              numberOfLines={2}
-              style={styles.multilineInput}
-            />
+            <Input label={t.evaluation.cardioNotes} placeholder={t.evaluation.cardioNotesPlaceholder} value={form.cardioTests.notes} onChangeText={(v) => updateCardio('notes', v)} multiline numberOfLines={2} style={styles.multilineInput} />
           </View>
         )}
 
-        {/* ═══════════════════════════════════════════ */}
-        {/* 10. FOTOS DE PROGRESSO */}
-        {/* ═══════════════════════════════════════════ */}
+        {/* ═══ 10. FOTOS DE PROGRESSO ═════════════════════════ */}
         <SectionHeader title={t.evaluation.progressPhotos} isOpen={showPhotos} onToggle={() => setShowPhotos(!showPhotos)} />
         {showPhotos && (
           <View style={styles.sectionContent}>
@@ -732,9 +760,7 @@ export default function NewEvaluationScreen() {
           placeholder={t.evaluation.notesPlaceholder}
           value={form.notes}
           onChangeText={(v) => setForm((prev) => ({ ...prev, notes: v }))}
-          multiline
-          numberOfLines={3}
-          style={styles.multilineInput}
+          multiline numberOfLines={3} style={styles.multilineInput}
         />
 
         {/* Save */}
@@ -756,22 +782,25 @@ export default function NewEvaluationScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   scroll: { padding: Spacing.xl, paddingBottom: Spacing.huge * 2 },
+
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: Spacing.xxl,
+    flexDirection: 'row', alignItems: 'center',
+    justifyContent: 'space-between', marginBottom: Spacing.xl,
   },
   title: { fontSize: FontSize.xl, fontWeight: '700' },
 
-  // Section
+  // Client info bar
+  clientInfoCard: { marginBottom: Spacing.md, padding: Spacing.sm },
+  clientInfoRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
+  clientInfoItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  clientInfoText: { fontSize: FontSize.sm, fontWeight: '500' },
+
+  // Section header
   sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: 'row', alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: Spacing.md,
-    marginTop: Spacing.md,
-    marginBottom: Spacing.sm,
+    marginTop: Spacing.md, marginBottom: Spacing.sm,
     borderBottomWidth: 1,
   },
   sectionLabel: { fontSize: FontSize.xs, fontWeight: '700', letterSpacing: 1 },
@@ -786,21 +815,16 @@ const styles = StyleSheet.create({
   // Activity level chips
   activityGroup: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm, marginBottom: Spacing.sm },
   activityChip: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-    borderRadius: BorderRadius.full,
-    borderWidth: 1,
+    paddingHorizontal: Spacing.md, paddingVertical: Spacing.xs,
+    borderRadius: BorderRadius.full, borderWidth: 1,
   },
   activityChipText: { fontSize: FontSize.xs, fontWeight: '600' },
 
-  // Checkboxes / postural
+  // Postural checkboxes
   checkCard: { marginBottom: Spacing.sm, padding: 0, overflow: 'hidden' },
   checkRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   checkLabel: { fontSize: FontSize.md, flex: 1 },
@@ -817,10 +841,9 @@ const styles = StyleSheet.create({
   photoIndex: { fontSize: FontSize.xs, textAlign: 'center', marginTop: 4 },
   addPhotoCard: {
     width: '30%', aspectRatio: 3 / 4,
-    borderRadius: BorderRadius.md,
-    borderWidth: 1.5, borderStyle: 'dashed',
-    alignItems: 'center', justifyContent: 'center',
-    gap: Spacing.xs,
+    borderRadius: BorderRadius.md, borderWidth: 1.5,
+    borderStyle: 'dashed', alignItems: 'center',
+    justifyContent: 'center', gap: Spacing.xs,
   },
   addPhotoText: { fontSize: FontSize.xs, fontWeight: '600' },
 
